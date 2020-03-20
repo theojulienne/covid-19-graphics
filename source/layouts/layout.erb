@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+<%
+title ||= current_page.data.title
+datasets ||= []
+datasets += (current_page.data.datasets || [])
+%>
+
+  <title><%= title %> - covid.graphics</title>
+  <%= stylesheet_link_tag "site" %>
+  <%= javascript_include_tag "site" %>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <script>
+    var loaded_datasets = {};
+    var country_datasets = {};
+    function covid19_dataset_callback(dataset_name, dataset, metadata) {
+      loaded_datasets[dataset_name] = dataset;
+      if (metadata['country_iso']) {
+        country_datasets[metadata['country_iso']] = dataset;
+      }
+    }
+
+    function scale_permil(ts, country_code) {
+      var millions = covid19_dataset_populations[country_code] / 1000000;
+      return ts.map(function (x) {
+              return x / millions;
+      });
+    }
+    function scale_none(ts, country_code) {
+      return ts;
+    }
+
+    function country_series_scaled(covid19_dataset, data, country_code, scale_function, legend_suffix) {
+      var legend = covid19_dataset_country_names[country_code];
+      var x_axis = covid19_dataset['timeseries_dates'];
+      return {
+        'confirmed': {
+              x: x_axis,
+              y: scale_function(data['total']['confirmed'], country_code),
+              name: legend + ', Confirmed' + legend_suffix
+        },
+        'recovered': {
+              x: x_axis,
+              y: scale_function(data['total']['recovered'], country_code),
+              name: legend + ', Recovered' + legend_suffix
+        },
+        'deaths': {
+              x: x_axis,
+              y: scale_function(data['total']['deaths'], country_code),
+              name: legend + ', Deaths' + legend_suffix
+        }
+      };
+    }
+  </script>
+
+  <% datasets.each do |dataset| %>
+  <script src="https://theojulienne.github.io/covid-19-data/<%= dataset %>.js"></script>
+  <% end %>
+  <script src="https://theojulienne.github.io/covid-19-data/populations.js"></script>
+  <script src="https://theojulienne.github.io/covid-19-data/countries.js"></script>
+
+  <!-- Custom fonts for this template-->
+  <link href="<%= config[:site_url] %>/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+  <!-- Custom styles for this template-->
+  <%= stylesheet_link_tag "sb-admin-2.min" %>
+
+</head>
+
+<body id="page-top">
+
+  <!-- Page Wrapper -->
+  <div id="wrapper">
+
+    <!-- Sidebar -->
+    <ul class="navbar-nav bg-gradient-dark sidebar sidebar-dark accordion" id="accordionSidebar">
+
+      <!-- Sidebar - Brand -->
+      <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<%= config[:site_url] %>/index.html">
+        <div class="sidebar-brand-text mx-3">covid.graphics</div>
+      </a>
+
+      <!-- Divider -->
+      <hr class="sidebar-divider my-0">
+
+      <!-- Nav Item - Dashboard -->
+      <li class="nav-item active">
+        <a class="nav-link" href="index.html">
+          <i class="fas fa-globe-americas"></i>
+          <span>COVID-19 Worldwide</span></a>
+      </li>
+
+      <!-- Divider -->
+      <hr class="sidebar-divider">
+
+      <!-- Heading -->
+      <div class="sidebar-heading">
+        MORE DATA
+      </div>
+
+      <!-- Nav Item - Pages Collapse Menu -->
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+          <i class="fas fa-flag"></i>
+          <span>By Country</span>
+        </a>
+        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+          <div class="bg-white py-2 collapse-inner rounded">
+            <h6 class="collapse-header">Countries:</h6>
+            <% BaseData::COUNTRY_TO_ISO_NAME.sort_by {|k, v| v}.each do |country_iso, country_name| %>
+            <a class="collapse-item" href="<%= config[:site_url] %>/country/<%= country_iso.downcase %>.html"><%= country_name %></a>
+            <% end %>
+          </div>
+        </div>
+      </li>
+
+      <!-- Divider -->
+      <hr class="sidebar-divider">
+
+      <% if false %>
+
+      <!-- Heading -->
+      <div class="sidebar-heading">
+        Addons
+      </div>
+
+      <!-- Nav Item - Charts -->
+      <li class="nav-item">
+        <a class="nav-link" href="charts.html">
+          <i class="fas fa-fw fa-chart-area"></i>
+          <span>Charts</span></a>
+      </li>
+
+      <!-- Nav Item - Tables -->
+      <li class="nav-item">
+        <a class="nav-link" href="tables.html">
+          <i class="fas fa-fw fa-table"></i>
+          <span>Tables</span></a>
+      </li>
+
+      <!-- Divider -->
+      <hr class="sidebar-divider d-none d-md-block">
+      
+      <% end %>
+
+    </ul>
+    <!-- End of Sidebar -->
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+
+      <!-- Main Content -->
+      <div id="content">
+
+        <!-- Topbar -->
+        <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+          <!-- Topbar Navbar -->
+          <ul class="navbar-nav ml-auto">
+
+            <!-- Nav Item - Search Dropdown (Visible Only XS) -->
+            <li class="nav-item dropdown no-arrow d-sm-none">
+              <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-search fa-fw"></i>
+              </a>
+              <!-- Dropdown - Messages -->
+              <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in" aria-labelledby="searchDropdown">
+                <form class="form-inline mr-auto w-100 navbar-search">
+                  <div class="input-group">
+                    <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Search" aria-describedby="basic-addon2">
+                    <div class="input-group-append">
+                      <button class="btn btn-primary" type="button">
+                        <i class="fas fa-search fa-sm"></i>
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </li>
+
+            <!-- Nav Item - Fork on GitHub -->
+            <li class="nav-item no-arrow mx-1">
+              <a class="nav-link" href="https://github.com/theojulienne/covid-19-graphics" role="button" aria-haspopup="true" aria-expanded="false">
+                <span class="mr-2 d-none d-lg-inline text-gray-600 small"><i class="fab fa-github fa-fw"></i> Contribute on GitHub</span>
+              </a>
+            </li>
+
+          </ul>
+
+        </nav>
+        <!-- End of Topbar -->
+
+        <!-- Begin Page Content -->
+        <div class="container-fluid">
+
+          <%= yield %>
+
+        </div>
+        <!-- /.container-fluid -->
+
+      </div>
+      <!-- End of Main Content -->
+
+      <!-- Footer -->
+      <footer class="sticky-footer bg-white">
+        <div class="container my-auto">
+          <div class="copyright text-center my-auto">
+            Based on <a href="https://github.com/theojulienne/covid-19-data">open source data collections</a> based off various sources including the <a href="https://github.com/CSSEGISandData/COVID-19">JHU CSSE data</a> and many others.<br />
+            <br />
+            This data and the graphs here are unofficial, and contributors are software developers, not epidemiologists.<br />
+            <br />
+            Uses wonderful open source projects like <a href="https://startbootstrap.com/themes/sb-admin-2/">sb-admin-2 theme</a>, <a href="https://middlemanapp.com/">Middleman</a>, and hosted and built freely using <a href="https://github.com/features/actions">GitHub Actions</a> and <a href="https://pages.github.com/">GitHub Pages</a>.
+          </div>
+        </div>
+      </footer>
+      <!-- End of Footer -->
+
+    </div>
+    <!-- End of Content Wrapper -->
+
+  </div>
+  <!-- End of Page Wrapper -->
+
+  <!-- Bootstrap core JavaScript-->
+  <script src="<%= config[:site_url] %>/vendor/jquery/jquery.min.js"></script>
+  <script src="<%= config[:site_url] %>/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Core plugin JavaScript-->
+  <script src="<%= config[:site_url] %>/vendor/jquery-easing/jquery.easing.min.js"></script>
+
+  <!-- Page level plugins -->
+  <script src="<%= config[:site_url] %>/vendor/chart.js/Chart.min.js"></script>
+
+</body>
+
+</html>
