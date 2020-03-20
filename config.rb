@@ -24,6 +24,8 @@ BaseData::COUNTRY_TO_ISO_NAME.each do |country_iso, country_name|
   }
 end
 
+ignore '/country-template.html'
+
 # With alternative layout
 # page '/path/to/file.html', layout: 'other_layout'
 
