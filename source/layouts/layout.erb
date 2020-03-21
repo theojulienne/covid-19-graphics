@@ -20,7 +20,18 @@ datasets += (current_page.data.datasets || [])
   <%= javascript_include_tag "site" %>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
+  <script src="<%= config[:site_url] %>/vendor/jquery/jquery.min.js"></script>
+
   <script>
+    var default_layout = {
+      margin: { t: 0 },
+      legend: {"orientation": "h"}
+    };
+    var default_config = {
+      displayModeBar: false
+    };
+
+
     var loaded_datasets = {};
     var country_datasets = {};
     function covid19_dataset_callback(dataset_name, dataset, metadata) {
@@ -233,7 +244,6 @@ datasets += (current_page.data.datasets || [])
   <!-- End of Page Wrapper -->
 
   <!-- Bootstrap core JavaScript-->
-  <script src="<%= config[:site_url] %>/vendor/jquery/jquery.min.js"></script>
   <script src="<%= config[:site_url] %>/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
   <!-- Core plugin JavaScript-->

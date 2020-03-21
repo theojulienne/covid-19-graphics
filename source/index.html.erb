@@ -109,25 +109,17 @@ datasets: ['dataset_top10', 'dataset_world_totals']
     lines_permil.push(country_series_scaled(covid19_dataset, covid19_dataset['subseries'][country_iso], country_iso, scale_permil, ' (per million)')['confirmed']);
   }
 
-  Plotly.newPlot(document.getElementById('graph_permil'),
+  Plotly.newPlot(
+    'graph_permil',
     lines_permil,
-    {
-      margin: { t: 0 },
-      legend: {"orientation": "h"}
-    },
-    {
-      displayModeBar: false
-    }
+    default_layout,
+    default_config
   );
 
-  Plotly.newPlot(document.getElementById('graph_confirmed'),
+  Plotly.newPlot(
+    'graph_confirmed',
     lines_confirmed,
-    {
-      margin: { t: 0 },
-      legend: {"orientation": "h"}
-    },
-    {
-      displayModeBar: false
-    }
+    default_layout,
+    default_config
   );
 </script>
