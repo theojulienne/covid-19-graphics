@@ -67,59 +67,61 @@ datasets: ['dataset_top10', 'dataset_world_totals']
 
 </div>
 
-<div class="row">
-
-  <div class="col-xl-12 col-lg-7">
-    <div class="card shadow mb-4">
-      <!-- Card Header - Dropdown -->
-      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">Top 10 countries by confirmed cases</h6>
-      </div>
-      <!-- Card Body -->
-      <div class="card-body">
-        <div id="graph_confirmed" style="width: 100%;height:400px;"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-xl-12 col-lg-7">
-    <div class="card shadow mb-4">
-      <!-- Card Header - Dropdown -->
-      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">Top 10 countries by confirmed cases (cases per million)</h6>
-      </div>
-      <!-- Card Body -->
-      <div class="card-body">
-        <div id="graph_permil" style="width: 100%;height:400px;"></div>
-      </div>
-    </div>
-  </div>
-
-</div>
+<%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by confirmed cases", :graph_id => "graph_confirmed" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by confirmed cases (cases per million)", :graph_id => "graph_permil" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by confirmed cases (from point of over 100 cases)", :graph_id => "graph_realigned" }) %>
 
 <script>
   // pretend we have all of them for this part
   var covid19_dataset = covid19_dataset_top10;
 
   var lines_permil = [];
-  var lines_confirmed = []
+  var lines_confirmed = [];
 
   for (var country_iso in covid19_dataset_top10['subseries']) {
     lines_confirmed.push(country_series_scaled(covid19_dataset, covid19_dataset['subseries'][country_iso], country_iso, scale_none, '')['confirmed']);
     lines_permil.push(country_series_scaled(covid19_dataset, covid19_dataset['subseries'][country_iso], country_iso, scale_permil, ' (per million)')['confirmed']);
   }
 
+  // now take the 'confirmed' graph and shift the x values.
+  // 
+  var day0_threshold = 100;
+  var adjusted_traces = [];
+  for (var i in lines_confirmed) {
+    var confirmed_trace = lines_confirmed[i];
+    var adjusted_trace = $.extend(true, {}, confirmed_trace);
+    var day0_index;
+    for (var j in adjusted_trace.y) {
+      if (adjusted_trace.y[j] >= day0_threshold) {
+        day0_index = j;
+        break;
+      }
+    }
+    for (var j in adjusted_trace.x) {
+      adjusted_trace.x[j] = j - day0_index;
+    }
+    console.log(adjusted_trace);
+    adjusted_traces.push(adjusted_trace);
+  }
+
   Plotly.newPlot(
     'graph_permil',
     lines_permil,
-    default_layout,
+    $.extend({}, default_layout),
     default_config
   );
 
   Plotly.newPlot(
     'graph_confirmed',
     lines_confirmed,
-    default_layout,
-    default_config
+    $.extend({}, default_layout),
+    $.extend({}, default_config)
+  );
+
+  Plotly.newPlot(
+    'graph_realigned',
+    adjusted_traces,
+    $.extend({}, default_layout, {xaxis: {type: "linear", rangemode: "nonnegative"}}),
+    $.extend({}, default_config)
   );
 </script>
