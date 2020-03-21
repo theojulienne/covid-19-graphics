@@ -98,7 +98,7 @@ datasets: []
       });
     }
 
-    Plotly.newPlot('graph_states', subseries_lines, default_layout, default_config);
+    Plotly.newPlot('graph_states', limit_to_biggest_series(subseries_lines, 10), default_layout, default_config);
   }
 
   // the data is cumulative, so we make each relative it.
@@ -131,6 +131,6 @@ datasets: []
     }
   }
 
-  Plotly.newPlot('graph_new_cases', new_cases, $.extend({}, default_layout, {barmode: 'stack'}), default_config);
+  Plotly.newPlot('graph_new_cases', limit_to_biggest_series(new_cases, 10), $.extend({}, default_layout, {barmode: 'stack'}), default_config);
 
 </script>

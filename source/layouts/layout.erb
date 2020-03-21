@@ -25,7 +25,7 @@ datasets += (current_page.data.datasets || [])
   <script>
     var default_layout = {
       margin: { t: 0 },
-      legend: {"orientation": "h"}
+      legend: {"orientation": "h", "traceorder": "normal"}
     };
     var default_config = {
       displayModeBar: false
@@ -71,6 +71,20 @@ datasets += (current_page.data.datasets || [])
               name: legend + ', Deaths' + legend_suffix
         }
       };
+    }
+
+    function limit_to_biggest_series(traces, limit) {
+      var ordered = traces.sort(function(a, b) {
+        return b.y[b.y.length - 1] - a.y[a.y.length - 1];
+      });
+
+      for (var i in ordered) {
+        if (i >= limit) {
+          ordered[i]['visible'] = 'legendonly';
+        }
+      }
+
+      return ordered;
     }
   </script>
 
