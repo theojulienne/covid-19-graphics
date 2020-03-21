@@ -90,7 +90,6 @@ datasets: []
     var subseries_lines = [];
 
     for (var subregion in country_dataset['subseries']) {
-      console.log(subregion);
       var dataset = country_dataset['subseries'][subregion]['total'];
       subseries_lines.push({
         x: country_dataset['timeseries_dates'],
