@@ -1,0 +1,18 @@
+<% if has_state_pages %>
+<div class="row">
+  <div class="col-xl-12 col-lg-7">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">State-level data</h6>
+      </div>
+      
+      <div class="card-body">
+        <a href="<%= config[:site_url] %>/country/<%= country_iso.downcase %>.html">All of <%= country_iso %></a>
+        <% states.each do |state_code, state_name| %>
+        , <a href="<%= config[:site_url] %>/country/<%= country_iso.downcase %>/<%= state_code.downcase %>.html"><%= state_code %></a>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+<% end %>
