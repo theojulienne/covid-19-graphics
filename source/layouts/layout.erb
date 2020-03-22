@@ -9,6 +9,16 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-161561782-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-161561782-1');
+  </script>
+
 <%
 title ||= current_page.data.title
 datasets ||= []
@@ -193,7 +203,7 @@ datasets += (current_page.data.datasets || [])
 
           <!-- Topbar Navbar -->
           <ul class="navbar-nav ml-auto">
-          
+
             <!-- Nav Item - Fork on GitHub -->
             <li class="nav-item no-arrow mx-1">
               <a class="nav-link" href="https://github.com/theojulienne/covid-19-graphics" role="button" aria-haspopup="true" aria-expanded="false">
