@@ -126,10 +126,42 @@ datasets: ['dataset_top10', 'dataset_world_totals']
     type: 'bar'
   });
 
+  var annotations = [
+    {
+      text: "One death every minute",
+      x: 0.05,
+      y: 24*60,
+      xref: 'paper',
+      yref: 'y',
+      showarrow: false,
+      yanchor: 'bottom',
+      font: {
+        color: '#aa0000'
+      }
+    }
+  ];
+
+  var shapes = [
+    {
+      x0: 0,
+      x1: 1,
+      type: 'line',
+      y0: 24*60,
+      y1: 24*60,
+      xref: 'paper',
+      yref: 'y',
+      line: {
+        color: '#aa0000',
+        dash: 'dot',
+        width: 2
+      }
+    }
+  ];
+
   Plotly.newPlot(
     'graph_world_total_deaths',
     mortality_traces,
-    $.extend({}, default_layout, {barmode: 'stack'}),
+    $.extend({}, default_layout, {barmode: 'stack', annotations: annotations, shapes: shapes}),
     $.extend({}, default_config)
   );
 </script>
