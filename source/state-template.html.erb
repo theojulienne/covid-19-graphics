@@ -75,6 +75,8 @@ datasets: []
 <%= partial(:standard_graph_container, :locals => { :title => "Total cases of COVID-19 in #{state_name}, #{country_name}", :graph_id => "graph_overview" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "New cases per day", :graph_id => "graph_new_cases" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Tests per day", :graph_id => "graph_tests" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Sources of infection", :graph_id => "graph_sources" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Age groups of confirmed cases", :graph_id => "graph_age_groups" }) %>
 
 <script>
   var lines = [];
@@ -88,7 +90,7 @@ datasets: []
     });
   }
 
-  Plotly.newPlot('graph_overview', lines, default_layout, default_config);
+  Plotly.newPlot('graph_overview', lines, $.extend({}, default_layout), default_config);
 
   // the data is cumulative, so we make each relative it.
   function cumulative_to_delta(points) {
@@ -131,5 +133,29 @@ datasets: []
     // no data, so remove the whole row
     $('#graph_tests_row').remove();
   }
+
+  function optional_stacked_bar_over_time(graph_id, dataset_key) {
+    if (state_dataset[dataset_key]) {
+      var traces = [];
+      var keys = state_dataset[dataset_key]['keys'];
+      var subseries = state_dataset[dataset_key]['subseries'];
+
+      for (var i in keys) {
+        var series_points = subseries[keys[i]];
+        traces.push({
+          x: country_dataset['timeseries_dates'],
+          y: series_points,
+          type: 'bar',
+          name: keys[i],
+        });
+      }
+
+      Plotly.newPlot(graph_id, traces, $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
+    } else {
+      $('#' + graph_id + '_row').remove();
+    }
+  }
+  optional_stacked_bar_over_time('graph_sources', 'sources');
+  optional_stacked_bar_over_time('graph_age_groups', 'age_groups');
 
 </script>
