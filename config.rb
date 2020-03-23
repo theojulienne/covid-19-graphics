@@ -27,7 +27,7 @@ BaseData::COUNTRY_TO_ISO_NAME.each do |country_iso, country_name|
     country_name: country_name,
     title: country_name,
     datasets: ["by_country/#{country_iso}"],
-    
+
     has_state_pages: has_state_pages,
     states: states,
   }
@@ -50,6 +50,7 @@ BaseData::COUNTRY_TO_ISO_NAME.each do |country_iso, country_name|
 end
 
 ignore '/country-template.html'
+ignore '/state-template.html'
 
 # With alternative layout
 # page '/path/to/file.html', layout: 'other_layout'
