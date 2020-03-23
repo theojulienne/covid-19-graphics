@@ -74,11 +74,13 @@ datasets: []
 
 <%= partial(:standard_graph_container, :locals => { :title => "Total cases of COVID-19 in #{state_name}, #{country_name}", :graph_id => "graph_overview" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "New cases per day", :graph_id => "graph_new_cases" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Tests per day", :graph_id => "graph_tests" }) %>
 
 <script>
   var lines = [];
 
   for (var stat in state_dataset['total']) {
+    if (stat != 'confirmed' && stat != 'recovered' && stat != 'deaths') continue;
     lines.push({
       x: country_dataset['timeseries_dates'],
       y: state_dataset['total'][stat],
@@ -108,5 +110,26 @@ datasets: []
   });
 
   Plotly.newPlot('graph_new_cases', limit_to_biggest_series(new_cases, 10), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
+
+  if (state_dataset['total']['tested']) {
+    var tested_data = [];
+    tested_data.push({
+      x: country_dataset['timeseries_dates'],
+      y: cumulative_to_delta(state_dataset['total']['tested']),
+      type: 'bar',
+      name: 'Tests conducted',
+    });
+    tested_data.push({
+      x: country_dataset['timeseries_dates'],
+      y: cumulative_to_delta(state_dataset['total']['confirmed']),
+      type: 'line',
+      name: 'Confirmed cases',
+    });
+
+    Plotly.newPlot('graph_tests', limit_to_biggest_series(tested_data, 10), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
+  } else {
+    // no data, so remove the whole row
+    $('#graph_tests_row').remove();
+  }
 
 </script>
