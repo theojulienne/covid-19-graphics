@@ -26,6 +26,7 @@ datasets: ['dataset_top10', 'dataset_world_totals']
 <%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by confirmed cases (from point of over 100 cases)", :graph_id => "graph_realigned" }) %>
 
 <%= partial(:standard_graph_container, :locals => { :title => "Changes in confirmed, recovered and deaths per day", :graph_id => "graph_world_totals" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Daily deaths from COVID-19 across the world", :graph_id => "graph_world_total_deaths" }) %>
 
 <script>
   // pretend we have all of them for this part
@@ -96,6 +97,38 @@ datasets: ['dataset_top10', 'dataset_world_totals']
   Plotly.newPlot(
     'graph_world_totals',
     world_totals_traces,
+    $.extend({}, default_layout, {barmode: 'stack'}),
+    $.extend({}, default_config)
+  );
+
+  // deaths by top 10 countries with confirmed cases, remainder as Other
+  var mortality_traces = [];
+  var remainder_trace = cumulative_to_delta(covid19_dataset_world_totals['total']['deaths']);
+
+  for (var country_iso in covid19_dataset_top10['subseries']) {
+    var trace = cumulative_to_delta(covid19_dataset_top10['subseries'][country_iso]['total']['deaths']);
+    mortality_traces.push({
+      x: covid19_dataset_world_totals['timeseries_dates'],
+      y: trace,
+      name: covid19_dataset_country_names[country_iso],
+      type: 'bar'
+    });
+
+    for (var i in trace) {
+      remainder_trace[i] -= trace[i];
+    }
+  }
+
+  mortality_traces.push({
+    x: covid19_dataset_world_totals['timeseries_dates'],
+    y: remainder_trace,
+    name: 'Other countries',
+    type: 'bar'
+  });
+
+  Plotly.newPlot(
+    'graph_world_total_deaths',
+    mortality_traces,
     $.extend({}, default_layout, {barmode: 'stack'}),
     $.extend({}, default_config)
   );
