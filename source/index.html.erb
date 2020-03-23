@@ -71,6 +71,8 @@ datasets: ['dataset_top10', 'dataset_world_totals']
 <%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by confirmed cases (cases per million)", :graph_id => "graph_permil" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by confirmed cases (from point of over 100 cases)", :graph_id => "graph_realigned" }) %>
 
+<%= partial(:standard_graph_container, :locals => { :title => "Changes in confirmed, recovered and deaths per day", :graph_id => "graph_world_totals" }) %>
+
 <script>
   // pretend we have all of them for this part
   var covid19_dataset = covid19_dataset_top10;
@@ -121,6 +123,26 @@ datasets: ['dataset_top10', 'dataset_world_totals']
     'graph_realigned',
     adjusted_traces,
     $.extend({}, default_layout, {xaxis: {type: "linear", rangemode: "nonnegative"}}),
+    $.extend({}, default_config)
+  );
+
+  // and world totals of confirmed/deaths/recovered
+  var world_totals_traces = [];
+  for (var stat in covid19_dataset_world_totals['total']) {
+    if (stat != 'confirmed' && stat != 'recovered' && stat != 'deaths') continue;
+    var trace = covid19_dataset_world_totals['total'][stat];
+    world_totals_traces.push({
+      x: covid19_dataset_world_totals['timeseries_dates'],
+      y: cumulative_to_delta(trace),
+      name: stat[0].toUpperCase() + stat.slice(1),
+      type: 'bar'
+    });
+  }
+
+  Plotly.newPlot(
+    'graph_world_totals',
+    world_totals_traces,
+    $.extend({}, default_layout, {barmode: 'stack'}),
     $.extend({}, default_config)
   );
 </script>

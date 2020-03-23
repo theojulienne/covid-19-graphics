@@ -96,6 +96,17 @@ datasets += (current_page.data.datasets || [])
 
       return ordered;
     }
+
+    function cumulative_to_delta(points) {
+      var relative = [];
+      var last = 0;
+      for (var i in points) {
+        var value = points[i];
+        relative.push(value - last);
+        last = value;
+      }
+      return relative;
+    }
   </script>
 
   <% datasets.each do |dataset| %>

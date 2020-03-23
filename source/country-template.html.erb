@@ -103,18 +103,6 @@ datasets: []
     Plotly.newPlot('graph_states', limit_to_biggest_series(subseries_lines, 10), default_layout, default_config);
   }
 
-  // the data is cumulative, so we make each relative it.
-  function cumulative_to_delta(points) {
-    var relative = [];
-    var last = 0;
-    for (var i in points) {
-      var value = points[i];
-      relative.push(value - last);
-      last = value;
-    }
-    return relative;
-  }
-
   var new_cases = [];
   if (!has_states) {
     new_cases.push({
