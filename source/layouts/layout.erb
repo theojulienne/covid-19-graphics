@@ -102,7 +102,11 @@ datasets += (current_page.data.datasets || [])
       var last = 0;
       for (var i in points) {
         var value = points[i];
-        relative.push(value - last);
+        if (last == null) {
+          relative.push(0);
+        } else {
+          relative.push(value - last);
+        }
         last = value;
       }
       return relative;
