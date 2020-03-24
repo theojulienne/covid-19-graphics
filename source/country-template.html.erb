@@ -28,6 +28,7 @@ datasets: []
 <%= partial(:standard_graph_container, :locals => { :title => "Total cases of COVID-19 in #{country_name}", :graph_id => "graph_overview" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Diagnoses in states and territories over time", :graph_id => "graph_states" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "New cases per day", :graph_id => "graph_new_cases" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Tests per day in states and territories that report it", :graph_id => "graph_tests" }) %>
 
 <script>
   var has_states = (country_dataset['subseries'] && Object.keys(country_dataset['subseries']).length > 0);
@@ -76,5 +77,33 @@ datasets: []
   }
 
   Plotly.newPlot('graph_new_cases', limit_to_biggest_series(new_cases, 10), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
+
+  // tests per day per state
+  if (has_states) {
+    var tested_data = [];
+    for (var subregion in country_dataset['subseries']) {
+      if (!country_dataset['subseries'][subregion]['total']['tested']) continue;
+      tested_data.push({
+        x: country_dataset['timeseries_dates'],
+        y: cumulative_to_delta(country_dataset['subseries'][subregion]['total']['tested']),
+        type: 'bar',
+        name: subregion,
+      });
+    }
+    if (tested_data.length == 0) {
+      $('#graph_tests_row').remove();
+    } else {
+      tested_data.push({
+        x: country_dataset['timeseries_dates'],
+        y: cumulative_to_delta(country_dataset['total']['confirmed']),
+        type: 'line',
+        name: 'Confirmed cases (country)',
+      });
+
+      Plotly.newPlot('graph_tests', limit_to_biggest_series(tested_data, 10), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
+    }
+  } else {
+    $('#graph_tests_row').remove();
+  }
 
 </script>
