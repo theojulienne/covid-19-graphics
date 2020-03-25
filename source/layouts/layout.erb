@@ -64,23 +64,16 @@ datasets += (current_page.data.datasets || [])
     function country_series_scaled(covid19_dataset, data, country_code, scale_function, legend_suffix) {
       var legend = covid19_dataset_country_names[country_code];
       var x_axis = covid19_dataset['timeseries_dates'];
-      return {
-        'confirmed': {
+      var ret = {};
+      for (var stat in data['total']) {
+        var statTitle = stat[0].toUpperCase() + stat.slice(1);
+        ret[stat] = {
               x: x_axis,
-              y: scale_function(data['total']['confirmed'], country_code),
-              name: legend + ', Confirmed' + legend_suffix
-        },
-        'recovered': {
-              x: x_axis,
-              y: scale_function(data['total']['recovered'], country_code),
-              name: legend + ', Recovered' + legend_suffix
-        },
-        'deaths': {
-              x: x_axis,
-              y: scale_function(data['total']['deaths'], country_code),
-              name: legend + ', Deaths' + legend_suffix
-        }
-      };
+              y: scale_function(data['total'][stat], country_code),
+              name: legend + ', ' + statTitle + legend_suffix
+        };
+      }
+      return ret;
     }
 
     function limit_to_biggest_series(traces, limit) {
