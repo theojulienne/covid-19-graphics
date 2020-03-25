@@ -35,6 +35,7 @@ datasets: []
   var lines = [];
 
   for (var stat in country_dataset['total']) {
+    if (stat != 'confirmed' && stat != 'recovered' && stat != 'deaths') continue;
     lines.push(country_series_scaled(country_dataset, country_dataset, '<%= country_iso %>', scale_none, '')[stat]);
   }
 
