@@ -98,7 +98,7 @@ datasets += (current_page.data.datasets || [])
         if (last == null) {
           relative.push(0);
         } else {
-          relative.push(value - last);
+          relative.push(Math.max(0, value - last));
         }
         last = value;
       }
