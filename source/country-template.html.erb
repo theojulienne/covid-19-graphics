@@ -29,6 +29,7 @@ datasets: []
 <%= partial(:standard_graph_container, :locals => { :title => "Diagnoses in states and territories over time", :graph_id => "graph_states" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "New cases per day", :graph_id => "graph_new_cases" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Tests per day in states and territories that report it", :graph_id => "graph_tests" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Daily deaths from COVID-19 across #{country_name}", :graph_id => "graph_deaths" }) %>
 
 <script>
   var has_states = (country_dataset['subseries'] && Object.keys(country_dataset['subseries']).length > 0);
@@ -106,5 +107,27 @@ datasets: []
   } else {
     $('#graph_tests_row').remove();
   }
+
+  // deaths
+
+  var new_deaths = [];
+  if (!has_states) {
+    new_deaths.push({
+      x: country_dataset['timeseries_dates'],
+      y: cumulative_to_delta(country_dataset['total']['deaths']),
+      type: 'bar',
+    });
+  } else {
+    for (var subregion in country_dataset['subseries']) {
+      new_deaths.push({
+        x: country_dataset['timeseries_dates'],
+        y: cumulative_to_delta(country_dataset['subseries'][subregion]['total']['deaths']),
+        type: 'bar',
+        name: subregion,
+      });
+    }
+  }
+
+  Plotly.newPlot('graph_deaths', limit_to_biggest_series(new_deaths, 10), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
 
 </script>
