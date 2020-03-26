@@ -1,0 +1,87 @@
+---
+title: COVID-19 Worldwide Control Measures
+datasets: ['dataset', 'dataset_world_totals', 'dataset_world_events']
+---
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">COVID-19 Worldwide Control Measures</h1>
+</div>
+
+<%= partial(:standard_graph_container, :locals => { :title => "Cumulative confirmed cases by country relative to resident lockdown (where known)", :graph_id => "graph_resident_lockdown_cumulative" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Cumulative confirmed cases by country relative to border closure (where known)", :graph_id => "graph_border_closure_cumulative" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Cumulative confirmed cases by country relative to incoming passenger self-isolation (where known)", :graph_id => "graph_self_isolation_cumulative" }) %>
+
+<script>
+  function prepare_event_timeline(graph_id, control_class, control_type, delta) {
+    var lockdown_events = {};
+
+    for (var country_iso in covid19_dataset_world_events['countries']) {
+      var country_events = covid19_dataset_world_events['countries'][country_iso]['events'];
+      for (var i in country_events) {
+        var event = country_events[i];
+        if (event['type'] == 'control' && event['control']['class'] == control_class && event['control']['type'] == control_type) {
+          lockdown_events[country_iso] = event;
+        }
+      }
+    }
+
+    var citationContainer = $("<div style=\"font-size: 11px;\"><hr></div>").insertAfter('#' + graph_id);
+    var traces = [];
+
+    // we have our countries with lockdown events now. pull their timeseries, and redo dates to be deltas from event.
+    var x_dates = covid19_dataset['timeseries_dates'];
+    for (var country_iso in lockdown_events) {
+      var country_event = lockdown_events[country_iso];
+      var lockdown_date = country_event['date'];
+
+      var c = $('<div />').appendTo(citationContainer);
+      $('<span />').text(lockdown_date + ' - ').appendTo(c);
+      $('<a target="_blank" />').text(country_event['name']).attr('href', country_event['citations'][0]).appendTo(c);
+
+      var new_x = [];
+      for (i = 0; i < x_dates.length; i++) {
+        new_x.push(i - x_dates.indexOf(lockdown_date))
+      }
+
+      var trace_data = covid19_dataset['subseries'][country_iso]['total']['confirmed'];
+      var type = 'line';
+      if (delta) {
+        trace_data = cumulative_to_delta(trace_data);
+        type = 'bar';
+      }
+
+      traces.push({
+        x: new_x,
+        y: trace_data,
+        type: type,
+        name: covid19_dataset_country_names[country_iso],
+      });
+    }
+
+    var layout = {
+      barmode: 'stack',
+      showlegend: true,
+      xaxis: {
+        range: [-10, 7*5],
+        tickvals: [-7, 0, 7, 14, 21, 28],
+        ticktext: ['-1 week', 'Control added', '1 week', '2 weeks', '3 weeks', '4 weeks'],
+        showline: true,
+        zeroline: true,
+        showgrid: true,
+        ticklen: 8,
+        gridwidth: 2,
+        zerolinewidth: 4
+      }
+    };
+
+    Plotly.newPlot(graph_id, traces, $.extend({}, default_layout, layout), $.extend({}, default_config));
+
+    // add citations
+    
+    var citation
+  }
+
+  prepare_event_timeline('graph_resident_lockdown_cumulative', 'resident-activity', 'lockdown', false);
+  prepare_event_timeline('graph_border_closure_cumulative', 'border-movement', 'non-citizen', false);
+  prepare_event_timeline('graph_self_isolation_cumulative', 'isolation', 'self-isolation', false);
+</script>
