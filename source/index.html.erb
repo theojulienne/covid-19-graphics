@@ -138,16 +138,30 @@ datasets: ['dataset_top10', 'dataset_world_totals']
       font: {
         color: '#aa0000'
       }
+    },
+    {
+      text: "One death every 30 seconds",
+      x: 0.05,
+      y: 24*60*2,
+      xref: 'paper',
+      yref: 'y',
+      showarrow: false,
+      yanchor: 'bottom',
+      font: {
+        color: '#aa0000'
+      }
     }
   ];
 
-  var shapes = [
-    {
+  var shapes = [];
+  for (var i in annotations) {
+    var annotation = annotations[i];
+    shapes.push({
       x0: 0,
       x1: 1,
       type: 'line',
-      y0: 24*60,
-      y1: 24*60,
+      y0: annotation.y,
+      y1: annotation.y,
       xref: 'paper',
       yref: 'y',
       line: {
@@ -155,8 +169,8 @@ datasets: ['dataset_top10', 'dataset_world_totals']
         dash: 'dot',
         width: 2
       }
-    }
-  ];
+    })
+  }
 
   Plotly.newPlot(
     'graph_world_total_deaths',
