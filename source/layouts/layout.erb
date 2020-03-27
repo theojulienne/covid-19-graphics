@@ -119,6 +119,16 @@ datasets += (current_page.data.datasets || [])
   <!-- Custom styles for this template-->
   <%= stylesheet_link_tag "sb-admin-2.min" %>
 
+  <link href="<%= config[:site_url] %>/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+
+  <style>
+  .table .sorting_1,
+  .table .sorting_desc,
+  .table .sorting_asc {
+    background-color: #f6f6f6;
+  }
+  </style>
+
 </head>
 
 <body id="page-top">
@@ -142,6 +152,11 @@ datasets += (current_page.data.datasets || [])
         <a class="nav-link" href="<%= config[:site_url] %>/index.html">
           <i class="fas fa-globe-americas"></i>
           <span>COVID-19 Worldwide</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="<%= config[:site_url] %>/countries.html">
+          <i class="fas fa-table"></i>
+          <span>Country summary table</span></a>
       </li>
 
       <!-- Divider -->

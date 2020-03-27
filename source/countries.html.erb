@@ -1,0 +1,69 @@
+---
+title: COVID-19 Worldwide
+datasets: ['dataset_latest_totals', 'dataset_world_totals']
+---
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">COVID-19 latest totals by country</h1>
+</div>
+
+<div class="row">
+
+  <script>
+    var latest_numbers = {};
+    for (var stat in covid19_dataset_world_totals['total']) {
+      var data = covid19_dataset_world_totals['total'][stat];
+      latest_numbers[stat] = data[data.length - 1];
+    }
+  </script>
+
+  <%= partial(:top_totals) %>
+
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Countries - confirmed, deaths and recovered</h6>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <div id="dataTable_wrapper" class="dataTables_wrapper dt-bootstrap4">
+      <div class="row"><div class="col-sm-12"><table class="table table-bordered dataTable" id="dataTable" width="100%" cellspacing="0" role="grid" aria-describedby="dataTable_info" style="width: 100%;">
+        <thead>
+          <tr role="row">
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 40%;">Country</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 20%;">Confirmed Cases</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 20%;">Deaths</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 20%;">Recovered</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="<%= config[:site_url] %>/vendor/datatables/jquery.dataTables.min.js"></script>
+<script src="<%= config[:site_url] %>/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+<script>
+for (var country_iso in covid19_dataset_latest_totals['countries']) {
+  var country_latest = covid19_dataset_latest_totals['countries'][country_iso]['latest'];
+
+  var country_name = covid19_dataset_country_names[country_iso];
+
+  var row = $('<tr role="row">').attr('class', 'even').appendTo('#dataTable tbody');
+  var countryCol = $('<td>').appendTo(row);
+  $('<a>').text(country_name).attr('href', '/country/' + country_iso.toLowerCase() + '.html').appendTo(countryCol);
+  $('<td>').text((country_latest['confirmed'] || '').toLocaleString()).attr('data-order', country_latest['confirmed']).appendTo(row);
+  $('<td>').text((country_latest['deaths'] || '').toLocaleString()).attr('data-order', country_latest['deaths']).appendTo(row);
+  $('<td>').text((country_latest['recovered'] || '').toLocaleString()).attr('data-order', country_latest['recovered']).appendTo(row);
+}
+
+$(document).ready(function() {
+  $('#dataTable').DataTable({
+    "order": [[ 2, "desc" ]],
+    "paging": false
+  });
+});
+</script>
