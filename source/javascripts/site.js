@@ -22,5 +22,7 @@
     if ($(document).width() < 768) {
       toggleSidebar();
     }
+
+    $(window).resize(resizeGraphs);
   });
 })(jQuery);
