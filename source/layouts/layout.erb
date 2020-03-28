@@ -27,13 +27,14 @@ datasets += (current_page.data.datasets || [])
 
   <title><%= title %> - covid.graphics</title>
   <%= stylesheet_link_tag "site" %>
-  <%= javascript_include_tag "site" %>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
   <script src="<%= config[:site_url] %>/vendor/jquery/jquery.min.js"></script>
+  <%= javascript_include_tag "site" %>
 
   <script>
     var default_layout = {
+      autosize: true,
       margin: { t: 0 },
       legend: {"orientation": "h", "traceorder": "normal"}
     };
@@ -140,7 +141,7 @@ datasets += (current_page.data.datasets || [])
     <ul class="navbar-nav bg-gradient-dark sidebar sidebar-dark accordion" id="accordionSidebar">
 
       <!-- Sidebar - Brand -->
-      <a class="sidebar-brand d-flex align-items-center justify-content-center" href="<%= config[:site_url] %>/index.html">
+      <a class="sidebar-brand d-none d-md-flex align-items-center justify-content-center" href="<%= config[:site_url] %>/index.html">
         <div class="sidebar-brand-text mx-3">covid.graphics</div>
       </a>
 
@@ -224,13 +225,22 @@ datasets += (current_page.data.datasets || [])
         <!-- Topbar -->
         <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
 
+          <!-- sidebar toggle -->
+          <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+            <i class="fa fa-bars"></i>
+          </button>
+
+          <a class="d-md-none align-items-center justify-content-center" href="<%= config[:site_url] %>/index.html">
+            <div class="">covid.graphics</div>
+          </a>
+
           <!-- Topbar Navbar -->
           <ul class="navbar-nav ml-auto">
 
             <!-- Nav Item - Fork on GitHub -->
             <li class="nav-item no-arrow mx-1">
-              <a class="nav-link" href="https://github.com/theojulienne/covid-19-graphics" role="button" aria-haspopup="true" aria-expanded="false">
-                <span class="mr-2 d-none d-lg-inline text-gray-600 small"><i class="fab fa-github fa-fw"></i> Contribute on GitHub</span>
+              <a class="nav-link" href="https://github.com/theojulienne/covid-19-graphics" role="button">
+                <span class="mr-2 text-gray-600"><i class="fab fa-github fa-fw"></i> <span class="small d-none d-lg-inline">Contribute on GitHub</span></span>
               </a>
             </li>
 
