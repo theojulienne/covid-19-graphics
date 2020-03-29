@@ -30,7 +30,10 @@ datasets: []
 <%= partial(:standard_graph_container, :locals => { :title => "New cases per day", :graph_id => "graph_new_cases" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Tests per day", :graph_id => "graph_tests" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Deaths per day", :graph_id => "graph_deaths" }) %>
-<%= partial(:standard_graph_container, :locals => { :title => "Hospitalisations per day", :graph_id => "graph_hospital" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Hospital admissions for COVID-19 per day", :graph_id => "graph_hospital_admissions" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Cases currently hospitalised", :graph_id => "graph_hospital_current" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Cases currently in ICU", :graph_id => "graph_icu_current" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Cases currently on ventilators", :graph_id => "graph_ventilators_current" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Sources of infection", :graph_id => "graph_sources" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Age groups of confirmed cases", :graph_id => "graph_age_groups" }) %>
 
@@ -78,20 +81,30 @@ datasets: []
     $('#graph_tests_row').remove();
   }
 
-  if (state_dataset['total']['hospitalized']) {
-    var hospital_data = [];
-    hospital_data.push({
-      x: country_dataset['timeseries_dates'],
-      y: cumulative_to_delta(state_dataset['total']['hospitalized']),
-      type: 'bar',
-      name: 'New cases hospitalized',
-    });
+  function optional_trace_over_time(graph_id, series_key, data_is_cumulative) {
+    if (state_dataset['total'][series_key]) {
+      var traces = [];
+      var data = {
+        x: country_dataset['timeseries_dates'],
+        y: state_dataset['total'][series_key],
+        type: 'line',
+      };
+      if (data_is_cumulative) {
+        data.y = cumulative_to_delta(data.y);
+        data.type = 'bar';
+      }
+      traces.push(data);
 
-    Plotly.newPlot('graph_hospital', hospital_data, $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
-  } else {
-    // no data, so remove the whole row
-    $('#graph_hospital_row').remove();
+      Plotly.newPlot(graph_id, traces, $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
+    } else {
+      // no data, so remove the whole row
+      $('#'+graph_id+'_row').remove();
+    }
   }
+  optional_trace_over_time('graph_hospital_admissions', 'hospitalized', true);
+  optional_trace_over_time('graph_hospital_current', 'current_hospitalized', false);
+  optional_trace_over_time('graph_icu_current', 'current_icu', false);
+  optional_trace_over_time('graph_ventilators_current', 'current_ventilators', false);
 
   function optional_stacked_bar_over_time(graph_id, dataset_key) {
     if (state_dataset[dataset_key]) {
