@@ -2,10 +2,7 @@
   // Resize all graphs that need it
   var resizeGraphs = function() {
     $('.plotly-graph-needs-resize').each(function() {
-      let id = this.id;
-      requestAnimationFrame(function() {
-        Plotly.relayout(id, {});        
-      });
+      Plotly.relayout(this.id, {});
     });
   };
 
