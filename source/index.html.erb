@@ -1,6 +1,6 @@
 ---
 title: COVID-19 Worldwide
-datasets: ['dataset_top10', 'dataset_world_totals']
+datasets: ['dataset_top10', 'dataset_world_totals', 'dataset_top10_by_deaths']
 ---
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -27,6 +27,8 @@ datasets: ['dataset_top10', 'dataset_world_totals']
 
 <%= partial(:standard_graph_container, :locals => { :title => "Changes in confirmed, recovered and deaths per day", :graph_id => "graph_world_totals" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Daily deaths from COVID-19 across the world", :graph_id => "graph_world_total_deaths" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by deaths so far", :graph_id => "graph_top_deaths" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by deaths so far (from point of over 100 deaths)", :graph_id => "graph_top_deaths_realigned" }) %>
 
 <script>
   // pretend we have all of them for this part
@@ -34,49 +36,70 @@ datasets: ['dataset_top10', 'dataset_world_totals']
 
   var lines_permil = [];
   var lines_confirmed = [];
+  var lines_top_deaths = [];
 
   for (var country_iso in covid19_dataset_top10['subseries']) {
     lines_confirmed.push(country_series_scaled(covid19_dataset, covid19_dataset['subseries'][country_iso], country_iso, scale_none, '')['confirmed']);
     lines_permil.push(country_series_scaled(covid19_dataset, covid19_dataset['subseries'][country_iso], country_iso, scale_permil, ' (per million)')['confirmed']);
   }
 
+  for (var country_iso in covid19_dataset_top10_by_deaths['subseries']) {
+    lines_top_deaths.push(country_series_scaled(covid19_dataset_top10_by_deaths, covid19_dataset_top10_by_deaths['subseries'][country_iso], country_iso, scale_none, '')['deaths']);
+  }
+
   // now take the 'confirmed' graph and shift the x values.
-  // 
-  var day0_threshold = 100;
-  var adjusted_traces = [];
-  for (var i in lines_confirmed) {
-    var confirmed_trace = lines_confirmed[i];
-    var adjusted_trace = $.extend(true, {}, confirmed_trace);
-    var day0_index;
-    for (var j in adjusted_trace.y) {
-      if (adjusted_trace.y[j] >= day0_threshold) {
-        day0_index = j;
-        break;
+  function shift_graph_to_threshold(raw_traces) {
+    var day0_threshold = 100;
+    var adjusted_traces = [];
+    for (var i in raw_traces) {
+      var trace = raw_traces[i];
+      var adjusted_trace = $.extend(true, {}, trace);
+      var day0_index;
+      for (var j in adjusted_trace.y) {
+        if (adjusted_trace.y[j] >= day0_threshold) {
+          day0_index = j;
+          break;
+        }
       }
+      for (var j in adjusted_trace.x) {
+        adjusted_trace.x[j] = j - day0_index;
+      }
+      adjusted_traces.push(adjusted_trace);
     }
-    for (var j in adjusted_trace.x) {
-      adjusted_trace.x[j] = j - day0_index;
-    }
-    adjusted_traces.push(adjusted_trace);
+    return adjusted_traces;
   }
 
   Plotly.newPlot(
     'graph_permil',
-    lines_permil,
+    limit_to_biggest_series(lines_permil, 10),
     $.extend({}, default_layout),
     default_config
   );
 
   Plotly.newPlot(
+    'graph_top_deaths',
+    limit_to_biggest_series(lines_top_deaths, 10),
+    $.extend({}, default_layout),
+    $.extend({}, default_config)
+  );
+
+  Plotly.newPlot(
+    'graph_top_deaths_realigned',
+    limit_to_biggest_series(shift_graph_to_threshold(lines_top_deaths), 10),
+    $.extend({}, default_layout, {xaxis: {type: "linear", rangemode: "nonnegative"}}),
+    $.extend({}, default_config)
+  );
+
+  Plotly.newPlot(
     'graph_confirmed',
-    lines_confirmed,
+    limit_to_biggest_series(lines_confirmed, 10),
     $.extend({}, default_layout),
     $.extend({}, default_config)
   );
 
   Plotly.newPlot(
     'graph_realigned',
-    adjusted_traces,
+    limit_to_biggest_series(shift_graph_to_threshold(lines_confirmed), 10),
     $.extend({}, default_layout, {xaxis: {type: "linear", rangemode: "nonnegative"}}),
     $.extend({}, default_config)
   );
