@@ -31,6 +31,11 @@ datasets: []
 <%= partial(:standard_graph_container, :locals => { :title => "Tests per day in states and territories that report it", :graph_id => "graph_tests" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Daily deaths from COVID-19 across #{country_name}", :graph_id => "graph_deaths" }) %>
 
+<%= partial(:standard_graph_container, :locals => { :title => "Hospital admissions for COVID-19 per day in states and territories that report it", :graph_id => "graph_hospital_admissions" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Cases currently hospitalised in states and territories that report it", :graph_id => "graph_hospital_current" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Cases currently in ICU in states and territories that report it", :graph_id => "graph_icu_current" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Cases currently on ventilators in states and territories that report it", :graph_id => "graph_ventilators_current" }) %>
+
 <script>
   var has_states = (country_dataset['subseries'] && Object.keys(country_dataset['subseries']).length > 0);
   var lines = [];
@@ -129,5 +134,42 @@ datasets: []
   }
 
   Plotly.newPlot('graph_deaths', limit_to_biggest_series(new_deaths, 10), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
+
+  // hospitalisation, icu and ventilator stats where supported
+  function optional_trace_over_time(graph_id, series_key, data_is_cumulative) {
+    if (!has_states) {
+      // no data, so remove the whole row
+      $('#'+graph_id+'_row').remove();
+      return;
+    }
+
+    var traces = [];
+    for (var subregion in country_dataset['subseries']) {
+      if (!country_dataset['subseries'][subregion]['total'][series_key]) continue;
+
+      var data = {
+        x: country_dataset['timeseries_dates'],
+        y: country_dataset['subseries'][subregion]['total'][series_key],
+        type: 'line',
+        name: subregion,
+      };
+      if (data_is_cumulative) {
+        data.y = cumulative_to_delta(data.y);
+        data.type = 'bar';
+      }
+      traces.push(data);
+    }
+
+    if (traces.length > 0) {
+      Plotly.newPlot(graph_id, traces, $.extend({}, default_layout, {barmode: 'stack', showlegend: true}), $.extend({}, default_config));
+    } else {
+      // no data, so remove the whole row
+      $('#'+graph_id+'_row').remove();
+    }
+  }
+  optional_trace_over_time('graph_hospital_admissions', 'hospitalized', true);
+  optional_trace_over_time('graph_hospital_current', 'current_hospitalized', false);
+  optional_trace_over_time('graph_icu_current', 'current_icu', false);
+  optional_trace_over_time('graph_ventilators_current', 'current_ventilators', false);
 
 </script>
