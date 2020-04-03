@@ -37,7 +37,11 @@ datasets: []
 <%= partial(:standard_graph_container, :locals => { :title => "Cases currently on ventilators in states and territories that report it", :graph_id => "graph_ventilators_current" }) %>
 
 <script>
+<% if has_state_pages %>
   var has_states = (country_dataset['subseries'] && Object.keys(country_dataset['subseries']).length > 0);
+<% else %>
+  var has_states = false;
+<% end %>
   var lines = [];
 
   for (var stat in country_dataset['total']) {
