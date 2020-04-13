@@ -69,7 +69,7 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
       });
     }
 
-    Plotly.newPlot('graph_states', limit_to_biggest_series(subseries_lines, 10), default_layout, default_config);
+    Plotly.newPlot('graph_states', limit_to_biggest_series_group_rest(subseries_lines, 9), default_layout, default_config);
   }
 
   var new_cases = [];
@@ -90,7 +90,7 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
     }
   }
 
-  Plotly.newPlot('graph_new_cases', limit_to_biggest_series(new_cases, 10), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
+  Plotly.newPlot('graph_new_cases', limit_to_biggest_series_group_rest(new_cases, 9), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
 
   // we want the confirmed and deaths for the country, plus the top 10 countries
   var country_series = country_series_scaled(country_dataset, country_dataset, '<%= country_iso %>', scale_none, '');
@@ -176,7 +176,7 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
 
     if (traces.length > 0) {
       if (data_is_cumulative) {
-        traces = limit_to_biggest_series(traces, 10);
+        traces = limit_to_biggest_series_group_rest(traces, 9);
       }
       Plotly.newPlot(graph_id, traces, $.extend({}, default_layout, {barmode: 'stack', showlegend: true}), $.extend({}, default_config));
     } else {

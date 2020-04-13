@@ -188,7 +188,7 @@ function limit_to_biggest_series_group_rest(traces, limit) {
     }
   }
 
-  new_trace.name = 'Other';
+  new_trace.name = 'All others';
 
   var new_traces = ordered.slice(0, limit);
   new_traces.push(new_trace);
