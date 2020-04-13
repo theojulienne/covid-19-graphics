@@ -177,39 +177,6 @@ datasets: ['dataset_top10', 'dataset_world_totals', 'dataset_top10_by_deaths']
       $.extend({}, default_layout, {yaxis: {type: "log", range: [ymin,ymax]}, xaxis: {rangemode: "nonnegative", autorange: true}, annotations: annotations, shapes: shapes}),
       $.extend({}, default_config)
     );
-
-    /*
-    function fixAnnotationAngles() {
-      var plot = $('#' + id)[0];
-      console.log('PLOTLY', plot.layout);
-      var w = $('#' + id).width() - default_layout.margin.l - default_layout.margin.r;
-      var h = $('#' + id).height() - default_layout.margin.b - default_layout.margin.t;
-      console.log('element', w, h);
-
-      var updates = {};
-      for (var i in annotations) {
-        var annotation = annotations[i];
-        // find the angle from where this hits the edge back to 0,0
-        var a_y = annotation.y;
-        var a_x = annotation.x;
-        var a_scaled_y = a_y / (ymax - ymin) * h;
-        var a_scaled_x = a_x / max_xval * w;
-        var zero_scaled_y = ymin / (ymax - ymin) * h;
-        var zero_scaled_x = 0 / max_xval * w;
-        console.log(a_scaled_x, a_scaled_y, h);
-        var angle = -(Math.atan2(a_scaled_y - zero_scaled_y, a_scaled_x - zero_scaled_x) * 180 / Math.PI);
-        console.log(x, y, angle);
-        updates['annotations[' + i + '].textangle'] = angle;
-      }
-      console.log(updates);
-      Plotly.relayout(id, updates);
-    }
-
-    fixAnnotationAngles();
-
-    // the angles change as the relative width/height does :rage:
-    window.addEventListener('resize', fixAnnotationAngles);
-    */
   }
 
   do_log_realigned('graph_confirmed_realigned_log', lines_confirmed, 2, 7);
