@@ -21,14 +21,17 @@ datasets: ['dataset_top10', 'dataset_world_totals', 'dataset_top10_by_deaths']
 
 </div>
 
+<%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by confirmed cases (log scale, days since over 100 cases)", :graph_id => "graph_confirmed_realigned_log" }) %>
+
 <%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by confirmed cases", :graph_id => "graph_confirmed" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by confirmed cases (cases per million)", :graph_id => "graph_permil" }) %>
-<%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by confirmed cases (from point of over 100 cases)", :graph_id => "graph_realigned" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by confirmed cases (days since over 100 confirmed cases)", :graph_id => "graph_realigned" }) %>
 
 <%= partial(:standard_graph_container, :locals => { :title => "Changes in confirmed, recovered and deaths per day", :graph_id => "graph_world_totals" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Daily deaths from COVID-19 across the world", :graph_id => "graph_world_total_deaths" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by deaths so far", :graph_id => "graph_top_deaths" }) %>
-<%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by deaths so far (from point of over 100 deaths)", :graph_id => "graph_top_deaths_realigned" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by deaths so far (log scale, days since over 100 deaths)", :graph_id => "graph_top_deaths_realigned_log" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Top 10 countries by deaths so far (days since over 100 deaths)", :graph_id => "graph_top_deaths_realigned" }) %>
 
 <script>
   // pretend we have all of them for this part
@@ -103,6 +106,114 @@ datasets: ['dataset_top10', 'dataset_world_totals', 'dataset_top10_by_deaths']
     $.extend({}, default_layout, {xaxis: {type: "linear", rangemode: "nonnegative"}}),
     $.extend({}, default_config)
   );
+
+  // log graphs with doubling lines
+  function do_log_realigned(id, input, ymin, ymax) {
+    var traces = limit_to_biggest_series(shift_graph_to_threshold(input), 10);
+
+    var max_xval = 0;
+    for (var i in traces) {
+      max_xval = Math.max(traces[i].y.length - traces[i].x.indexOf(0) - 1, max_xval);
+    }
+
+    var graph_boty = Math.pow(10, ymin);
+    var graph_topy = Math.pow(10, ymax);
+    var graph_rangey = graph_topy - graph_boty;
+
+    var annotations = [];
+    var shapes = [];
+    var days = [1,2,3,5,7,14];
+    for (var i in days) {
+      var d = days[i];
+      var top_hit_x = Math.log2(graph_topy / graph_boty) * d;
+      // assume the line hits the top of the graph, so we need our next relative to that point
+      var x = top_hit_x;
+      var y = graph_topy;
+      var xanchor = 'middle';
+      var yanchor = 'top';
+      if (top_hit_x > max_xval) {
+        // the line doesn't intersect the top of the graph (not exponential enough for the scale),
+        // so it intersects the right side of the graph instead
+        x = max_xval;
+        y = 100 * Math.pow(2, max_xval / d);
+        xanchor = 'right';
+        yanchor = 'top';
+      }
+      annotations.push({
+        text: (d == 1 ? "doubling every day" : "doubling every " + d + " days"),
+        textangle: 0,
+        x: x,
+        y: Math.log10(y),
+        xref: 'x',
+        yref: 'y',
+        showarrow: false,
+        xanchor: xanchor,
+        yanchor: yanchor,
+        font: {
+          color: '#aaaaaa',
+          size: 10
+        },
+        bgcolor: '#ffffff'
+      });
+      shapes.push({
+        x0: 0,
+        x1: max_xval,
+        type: 'line',
+        y0: 100,
+        y1: 100 * Math.pow(2, max_xval / d),
+        xref: 'x',
+        yref: 'y',
+        line: {
+          color: '#aaaaaa',
+          dash: 'dot',
+          width: 1
+        }
+      });
+    }
+
+    var p = Plotly.newPlot(
+      id,
+      traces,
+      $.extend({}, default_layout, {yaxis: {type: "log", range: [ymin,ymax]}, xaxis: {rangemode: "nonnegative", autorange: true}, annotations: annotations, shapes: shapes}),
+      $.extend({}, default_config)
+    );
+
+    /*
+    function fixAnnotationAngles() {
+      var plot = $('#' + id)[0];
+      console.log('PLOTLY', plot.layout);
+      var w = $('#' + id).width() - default_layout.margin.l - default_layout.margin.r;
+      var h = $('#' + id).height() - default_layout.margin.b - default_layout.margin.t;
+      console.log('element', w, h);
+
+      var updates = {};
+      for (var i in annotations) {
+        var annotation = annotations[i];
+        // find the angle from where this hits the edge back to 0,0
+        var a_y = annotation.y;
+        var a_x = annotation.x;
+        var a_scaled_y = a_y / (ymax - ymin) * h;
+        var a_scaled_x = a_x / max_xval * w;
+        var zero_scaled_y = ymin / (ymax - ymin) * h;
+        var zero_scaled_x = 0 / max_xval * w;
+        console.log(a_scaled_x, a_scaled_y, h);
+        var angle = -(Math.atan2(a_scaled_y - zero_scaled_y, a_scaled_x - zero_scaled_x) * 180 / Math.PI);
+        console.log(x, y, angle);
+        updates['annotations[' + i + '].textangle'] = angle;
+      }
+      console.log(updates);
+      Plotly.relayout(id, updates);
+    }
+
+    fixAnnotationAngles();
+
+    // the angles change as the relative width/height does :rage:
+    window.addEventListener('resize', fixAnnotationAngles);
+    */
+  }
+
+  do_log_realigned('graph_confirmed_realigned_log', lines_confirmed, 2, 7);
+  do_log_realigned('graph_top_deaths_realigned_log', lines_top_deaths, 2, 5);
 
   // and world totals of confirmed/deaths/recovered
   var world_totals_traces = [];
