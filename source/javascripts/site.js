@@ -32,7 +32,7 @@
 
 
 // log graphs with doubling lines
-function plotly_log_graph_with_doubling_lines(id, traces, ymin, ymax) {
+function plotly_log_graph_with_doubling_lines(id, traces, ymin, ymax, line_for_current_trajectory) {
   var max_xval = 0;
   for (var i in traces) {
     max_xval = Math.max(traces[i].y.length - traces[i].x.indexOf(0) - 1, max_xval);
@@ -91,6 +91,67 @@ function plotly_log_graph_with_doubling_lines(id, traces, ymin, ymax) {
         width: 1
       }
     });
+  }
+
+  if (line_for_current_trajectory != null) {
+    var start_curr = line_for_current_trajectory.x.indexOf(0);
+    var start_to_end = line_for_current_trajectory.x.length - start_curr;
+    var days_for_trajectory = 14;
+    if (start_to_end >= days_for_trajectory) {
+      // we have N days of data
+      var oldest_day_index = line_for_current_trajectory.x.length - days_for_trajectory;
+      var oldest_day = line_for_current_trajectory.x[oldest_day_index];
+      var latest_day = line_for_current_trajectory.x[line_for_current_trajectory.x.length - 1];
+      var last_n = line_for_current_trajectory.y.slice(oldest_day_index);
+      var oldest = last_n[0];
+      var latest = last_n[last_n.length - 1];
+      var oldest_log = Math.log2(oldest);
+      var latest_log = Math.log2(latest);
+      var delta_log_y = latest_log - oldest_log;
+
+      // work out where we would have been at day 0 given the current trajectory line
+      var traj_start = latest * Math.pow(2, -latest_day * (delta_log_y / days_for_trajectory));
+      
+      // in 'days_for_trajectory' days (x) we've changed by 'delta_log_y' (y)
+      var final_y = traj_start * Math.pow(2, max_xval * (delta_log_y / days_for_trajectory));
+      shapes.push({
+        x0: 0,
+        x1: max_xval,
+        type: 'line',
+        y0: traj_start,
+        y1: final_y,
+        xref: 'x',
+        yref: 'y',
+        opacity: 0.5,
+        line: {
+          color: '#ff0000',
+          dash: 'dot',
+          width: 1
+        }
+      });
+
+      if (Math.log10(final_y) < ymax) {
+        // hits the right side, so the doubling rate matters more
+        var days = parseInt(1 / (delta_log_y / days_for_trajectory));
+        annotations.push({
+          text: "currently doubling every " + days + " days (avg last 2 weeks)",
+          textangle: 0,
+          x: latest_day,
+          y: Math.log10(latest),
+          xref: 'x',
+          yref: 'y',
+          showarrow: false,
+          xanchor: 'left',
+          yanchor: 'top',
+          opacity: 0.5,
+          font: {
+            color: '#ff0000',
+            size: 10
+          },
+          bgcolor: '#ffffff'
+        });
+      }
+    }
   }
 
   var p = Plotly.newPlot(
@@ -209,7 +270,7 @@ function plotly_log_graph_vs_top(id, skip_country_iso, main_line, top10_dataset,
   
   lines_log.push($.extend({}, main_line, {line: {color: '#ff0000'}}));
   if (main_line.y[main_line.y.length - 1] > 100) {
-    plotly_log_graph_with_doubling_lines(id, shift_graph_to_threshold(lines_log), 2, 7);
+    plotly_log_graph_with_doubling_lines(id, shift_graph_to_threshold(lines_log), 2, 7, shift_graph_to_threshold([main_line])[0]);
   } else {
     $('#'+id+'_row').remove();
   }
