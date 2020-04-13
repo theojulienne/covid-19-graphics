@@ -32,7 +32,7 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
 <%= partial(:standard_graph_container, :locals => { :title => "New cases per day", :graph_id => "graph_new_cases" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Tests per day", :graph_id => "graph_tests" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Deaths per day", :graph_id => "graph_deaths" }) %>
-<%= partial(:standard_graph_container, :locals => { :title => "Deaths from COVID-19 in #{state_name}, #{country_name} comparison (log scale, days since over 100 deaths)", :graph_id => "graph_deaths_realigned_log" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Deaths from COVID-19 in #{state_name}, #{country_name} comparison (log scale, days since over 10 deaths)", :graph_id => "graph_deaths_realigned_log" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Hospital admissions for COVID-19 per day", :graph_id => "graph_hospital_admissions" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Cases currently hospitalised", :graph_id => "graph_hospital_current" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Cases currently in ICU", :graph_id => "graph_icu_current" }) %>

@@ -57,7 +57,7 @@ function plotly_log_graph_with_doubling_lines(id, traces, ymin, ymax, line_for_c
       // the line doesn't intersect the top of the graph (not exponential enough for the scale),
       // so it intersects the right side of the graph instead
       x = max_xval;
-      y = 100 * Math.pow(2, max_xval / d);
+      y = Math.pow(10, ymin) * Math.pow(2, max_xval / d);
       xanchor = 'right';
       yanchor = 'top';
     }
@@ -81,8 +81,8 @@ function plotly_log_graph_with_doubling_lines(id, traces, ymin, ymax, line_for_c
       x0: 0,
       x1: max_xval,
       type: 'line',
-      y0: 100,
-      y1: 100 * Math.pow(2, max_xval / d),
+      y0: Math.pow(10, ymin),
+      y1: Math.pow(10, ymin) * Math.pow(2, max_xval / d),
       xref: 'x',
       yref: 'y',
       line: {
@@ -163,8 +163,8 @@ function plotly_log_graph_with_doubling_lines(id, traces, ymin, ymax, line_for_c
 }
 
 // now take the 'confirmed' graph and shift the x values.
-function shift_graph_to_threshold(raw_traces) {
-  var day0_threshold = 100;
+function shift_graph_to_threshold(raw_traces, day0_threshold) {
+  day0_threshold = day0_threshold || 100;
   var adjusted_traces = [];
   for (var i in raw_traces) {
     var trace = raw_traces[i];
@@ -269,8 +269,16 @@ function plotly_log_graph_vs_top(id, skip_country_iso, main_line, top10_dataset,
   lines_log = lower_opacity(limit_to_biggest_series(lines_log, 9, false), 0.3);
   
   lines_log.push($.extend({}, main_line, {line: {color: '#ff0000'}}));
-  if (main_line.y[main_line.y.length - 1] > 100) {
-    plotly_log_graph_with_doubling_lines(id, shift_graph_to_threshold(lines_log), 2, 7, shift_graph_to_threshold([main_line])[0]);
+
+  var threshold = 100;
+  var ymin = 2;
+  if (field == 'deaths') {
+    threshold = 10;
+    ymin = 1;
+  }
+
+  if (main_line.y[main_line.y.length - 1] > threshold) {
+    plotly_log_graph_with_doubling_lines(id, shift_graph_to_threshold(lines_log, threshold), ymin, 7, shift_graph_to_threshold([main_line], threshold)[0]);
   } else {
     $('#'+id+'_row').remove();
   }
