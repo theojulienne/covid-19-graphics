@@ -1,6 +1,6 @@
 ---
 title: State
-datasets: []
+datasets: ['dataset_top10', 'dataset_top10_by_deaths']
 ---
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -26,10 +26,13 @@ datasets: []
 
 <%= partial(:state_country_selector, locals: { country_iso: country_iso }) %>
 
+<%= partial(:standard_graph_container, :locals => { :title => "Total cases of COVID-19 in #{state_name}, #{country_name} comparison (log scale, days since over 100 cases)", :graph_id => "graph_confirmed_realigned_log" }) %>
+
 <%= partial(:standard_graph_container, :locals => { :title => "Total cases of COVID-19 in #{state_name}, #{country_name}", :graph_id => "graph_overview" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "New cases per day", :graph_id => "graph_new_cases" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Tests per day", :graph_id => "graph_tests" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Deaths per day", :graph_id => "graph_deaths" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Deaths from COVID-19 in #{state_name}, #{country_name} comparison (log scale, days since over 100 deaths)", :graph_id => "graph_deaths_realigned_log" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Hospital admissions for COVID-19 per day", :graph_id => "graph_hospital_admissions" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Cases currently hospitalised", :graph_id => "graph_hospital_current" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Cases currently in ICU", :graph_id => "graph_icu_current" }) %>
@@ -40,14 +43,17 @@ datasets: []
 
 <script>
   var lines = [];
+  var lines_by_type = {};
 
   for (var stat in state_dataset['total']) {
     if (stat != 'confirmed' && stat != 'recovered' && stat != 'deaths') continue;
-    lines.push({
+    var line = {
       x: country_dataset['timeseries_dates'],
       y: state_dataset['total'][stat],
-      name: stat[0].toUpperCase() + stat.slice(1),
-    });
+      name: '<%= state_code %>, ' + stat[0].toUpperCase() + stat.slice(1),
+    };
+    lines.push(line);
+    lines_by_type[stat] = line;
   }
 
   Plotly.newPlot('graph_overview', lines, $.extend({}, default_layout), default_config);
@@ -60,6 +66,10 @@ datasets: []
   });
 
   Plotly.newPlot('graph_new_cases', limit_to_biggest_series(new_cases, 10), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
+
+  // we want the confirmed and deaths for the country, plus the top 10 countries
+  plotly_log_graph_vs_top('graph_confirmed_realigned_log', null, lines_by_type['confirmed'], covid19_dataset_top10, 'confirmed');
+  plotly_log_graph_vs_top('graph_deaths_realigned_log', null, lines_by_type['deaths'], covid19_dataset_top10_by_deaths, 'deaths');
 
   if (state_dataset['total']['tested']) {
     var tested_data = [];

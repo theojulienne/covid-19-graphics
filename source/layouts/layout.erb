@@ -77,20 +77,6 @@ datasets += (current_page.data.datasets || [])
       return ret;
     }
 
-    function limit_to_biggest_series(traces, limit) {
-      var ordered = traces.sort(function(a, b) {
-        return b.y[b.y.length - 1] - a.y[a.y.length - 1];
-      });
-
-      for (var i in ordered) {
-        if (i >= limit) {
-          ordered[i]['visible'] = 'legendonly';
-        }
-      }
-
-      return ordered;
-    }
-
     function cumulative_to_delta(points) {
       var relative = [];
       var last = 0;

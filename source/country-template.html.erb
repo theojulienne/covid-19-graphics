@@ -1,6 +1,6 @@
 ---
 title: Country
-datasets: []
+datasets: ['dataset_top10', 'dataset_top10_by_deaths']
 ---
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -25,11 +25,14 @@ datasets: []
 
 <%= partial(:state_country_selector, locals: { country_iso: country_iso }) %>
 
+<%= partial(:standard_graph_container, :locals => { :title => "Total cases of COVID-19 in #{country_name} comparison (log scale, days since over 100 cases)", :graph_id => "graph_confirmed_realigned_log" }) %>
+
 <%= partial(:standard_graph_container, :locals => { :title => "Total cases of COVID-19 in #{country_name}", :graph_id => "graph_overview" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Diagnoses in states and territories over time", :graph_id => "graph_states" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "New cases per day", :graph_id => "graph_new_cases" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Tests per day in states and territories that report it", :graph_id => "graph_tests" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Daily deaths from COVID-19 across #{country_name}", :graph_id => "graph_deaths" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Deaths from COVID-19 in #{country_name} comparison (log scale, days since over 100 deaths)", :graph_id => "graph_deaths_realigned_log" }) %>
 
 <%= partial(:standard_graph_container, :locals => { :title => "Hospital admissions for COVID-19 per day in states and territories that report it", :graph_id => "graph_hospital_admissions" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Cases currently hospitalised in states and territories that report it", :graph_id => "graph_hospital_current" }) %>
@@ -89,6 +92,11 @@ datasets: []
 
   Plotly.newPlot('graph_new_cases', limit_to_biggest_series(new_cases, 10), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
 
+  // we want the confirmed and deaths for the country, plus the top 10 countries
+  var country_series = country_series_scaled(country_dataset, country_dataset, '<%= country_iso %>', scale_none, '');
+  plotly_log_graph_vs_top('graph_confirmed_realigned_log', '<%= country_iso %>', country_series['confirmed'], covid19_dataset_top10, 'confirmed');
+  plotly_log_graph_vs_top('graph_deaths_realigned_log', '<%= country_iso %>', country_series['deaths'], covid19_dataset_top10_by_deaths, 'deaths');
+
   // tests per day per state
   if (has_states) {
     var tested_data = [];
@@ -104,6 +112,8 @@ datasets: []
     if (tested_data.length == 0) {
       $('#graph_tests_row').remove();
     } else {
+      tested_data = limit_to_biggest_series_group_rest(tested_data, 9);
+
       tested_data.push({
         x: country_dataset['timeseries_dates'],
         y: cumulative_to_delta(country_dataset['total']['confirmed']),
@@ -111,7 +121,7 @@ datasets: []
         name: 'Confirmed cases (country)',
       });
 
-      Plotly.newPlot('graph_tests', limit_to_biggest_series(tested_data, 10), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
+      Plotly.newPlot('graph_tests', tested_data, $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
     }
   } else {
     $('#graph_tests_row').remove();
@@ -137,7 +147,7 @@ datasets: []
     }
   }
 
-  Plotly.newPlot('graph_deaths', limit_to_biggest_series(new_deaths, 10), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
+  Plotly.newPlot('graph_deaths', limit_to_biggest_series_group_rest(new_deaths, 9), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
 
   // hospitalisation, icu and ventilator stats where supported
   function optional_trace_over_time(graph_id, series_key, data_is_cumulative) {
@@ -165,6 +175,9 @@ datasets: []
     }
 
     if (traces.length > 0) {
+      if (data_is_cumulative) {
+        traces = limit_to_biggest_series(traces, 10);
+      }
       Plotly.newPlot(graph_id, traces, $.extend({}, default_layout, {barmode: 'stack', showlegend: true}), $.extend({}, default_config));
     } else {
       // no data, so remove the whole row
