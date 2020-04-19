@@ -117,43 +117,12 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
   optional_trace_over_time('graph_icu_current', 'current_icu', false);
   optional_trace_over_time('graph_ventilators_current', 'current_ventilators', false);
 
-  function optional_stacked_bar_over_time(graph_id, dataset_key, convert_to_delta, inclusion_fn, layout_options) {
-    var traces = [];
-    inclusion_fn = inclusion_fn || function() { return true; };
-    layout_options = layout_options || {barmode: 'stack'};
-
-    if (state_dataset[dataset_key]) {
-      var keys = state_dataset[dataset_key]['keys'];
-      var subseries = state_dataset[dataset_key]['subseries'];
-
-      for (var i in keys) {
-        var series_points = subseries[keys[i]];
-        if (!inclusion_fn(keys[i])) continue;
-        
-        if (convert_to_delta) {
-          series_points = cumulative_to_delta(series_points);
-        }
-
-        traces.push({
-          x: country_dataset['timeseries_dates'],
-          y: series_points,
-          type: 'bar',
-          name: keys[i],
-        });
-      }
-    }
-
-    if (traces.length > 0) {
-      Plotly.newPlot(graph_id, traces, $.extend({}, default_layout, layout_options), $.extend({}, default_config));
-    } else {
-      $('#' + graph_id + '_row').remove();
-    }
-  }
-  optional_stacked_bar_over_time('graph_sources', 'sources', false);
-  optional_stacked_bar_over_time('graph_community', 'sources', true, function(key) {
+  // optional_stacked_bar_over_time is in site.js
+  optional_stacked_bar_over_time(state_dataset, 'graph_sources', 'sources', false);
+  optional_stacked_bar_over_time(state_dataset, 'graph_community', 'sources', true, function(key) {
     return (key.indexOf('Locally acquired') == 0);
   }, {});
-  optional_stacked_bar_over_time('graph_age_groups', 'age_groups', false);
+  optional_stacked_bar_over_time(state_dataset, 'graph_age_groups', 'age_groups', false);
 
   // deaths
 

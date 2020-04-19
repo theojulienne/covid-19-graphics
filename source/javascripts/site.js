@@ -283,3 +283,37 @@ function plotly_log_graph_vs_top(id, skip_country_iso, main_line, top10_dataset,
     $('#'+id+'_row').remove();
   }
 }
+
+
+function optional_stacked_bar_over_time(dataset, graph_id, dataset_key, convert_to_delta, inclusion_fn, layout_options) {
+  var traces = [];
+  inclusion_fn = inclusion_fn || function() { return true; };
+  layout_options = layout_options || {barmode: 'stack'};
+
+  if (dataset[dataset_key]) {
+    var keys = dataset[dataset_key]['keys'];
+    var subseries = dataset[dataset_key]['subseries'];
+
+    for (var i in keys) {
+      var series_points = subseries[keys[i]];
+      if (!inclusion_fn(keys[i])) continue;
+      
+      if (convert_to_delta) {
+        series_points = cumulative_to_delta(series_points);
+      }
+
+      traces.push({
+        x: country_dataset['timeseries_dates'],
+        y: series_points,
+        type: 'bar',
+        name: keys[i],
+      });
+    }
+  }
+
+  if (traces.length > 0) {
+    Plotly.newPlot(graph_id, traces, $.extend({}, default_layout, layout_options), $.extend({}, default_config));
+  } else {
+    $('#' + graph_id + '_row').remove();
+  }
+}

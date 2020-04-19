@@ -39,6 +39,9 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
 <%= partial(:standard_graph_container, :locals => { :title => "Cases currently in ICU in states and territories that report it", :graph_id => "graph_icu_current" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Cases currently on ventilators in states and territories that report it", :graph_id => "graph_ventilators_current" }) %>
 
+<%= partial(:standard_graph_container, :locals => { :title => "Sources of infection", :graph_id => "graph_sources" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Locally acquired cases (new cases per day)", :graph_id => "graph_community" }) %>
+
 <script>
 <% if has_state_pages %>
   var has_states = (country_dataset['subseries'] && Object.keys(country_dataset['subseries']).length > 0);
@@ -98,8 +101,9 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
   plotly_log_graph_vs_top('graph_deaths_realigned_log', '<%= country_iso %>', country_series['deaths'], covid19_dataset_top10_by_deaths, 'deaths');
 
   // tests per day per state
+
+  var tested_data = [];
   if (has_states) {
-    var tested_data = [];
     for (var subregion in country_dataset['subseries']) {
       if (!country_dataset['subseries'][subregion]['total']['tested']) continue;
       tested_data.push({
@@ -109,22 +113,29 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
         name: subregion,
       });
     }
-    if (tested_data.length == 0) {
-      $('#graph_tests_row').remove();
-    } else {
-      tested_data = limit_to_biggest_series_group_rest(tested_data, 9);
-
-      tested_data.push({
-        x: country_dataset['timeseries_dates'],
-        y: cumulative_to_delta(country_dataset['total']['confirmed']),
-        type: 'line',
-        name: 'Confirmed cases (country)',
-      });
-
-      Plotly.newPlot('graph_tests', tested_data, $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
-    }
-  } else {
+  } else if (country_dataset['total']['tested']) {
+    tested_data.push({
+      x: country_dataset['timeseries_dates'],
+      y: cumulative_to_delta(country_dataset['total']['tested']),
+      type: 'bar',
+      name: '<%= country_name %>',
+    });
+    $('#graph_tests_row .graph-title').text('Tests per day');
+  }
+  
+  if (tested_data.length == 0) {
     $('#graph_tests_row').remove();
+  } else {
+    tested_data = limit_to_biggest_series_group_rest(tested_data, 9);
+
+    tested_data.push({
+      x: country_dataset['timeseries_dates'],
+      y: cumulative_to_delta(country_dataset['total']['confirmed']),
+      type: 'line',
+      name: 'Confirmed cases (country)',
+    });
+
+    Plotly.newPlot('graph_tests', tested_data, $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
   }
 
   // deaths
@@ -151,27 +162,37 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
 
   // hospitalisation, icu and ventilator stats where supported
   function optional_trace_over_time(graph_id, series_key, data_is_cumulative) {
-    if (!has_states) {
-      // no data, so remove the whole row
-      $('#'+graph_id+'_row').remove();
-      return;
-    }
-
     var traces = [];
-    for (var subregion in country_dataset['subseries']) {
-      if (!country_dataset['subseries'][subregion]['total'][series_key]) continue;
 
+    if (has_states) {
+      for (var subregion in country_dataset['subseries']) {
+        if (!country_dataset['subseries'][subregion]['total'][series_key]) continue;
+
+        var data = {
+          x: country_dataset['timeseries_dates'],
+          y: country_dataset['subseries'][subregion]['total'][series_key],
+          type: 'line',
+          name: subregion,
+        };
+        if (data_is_cumulative) {
+          data.y = cumulative_to_delta(data.y);
+          data.type = 'bar';
+        }
+        traces.push(data);
+      }
+    } else if (country_dataset['total'][series_key]) {
       var data = {
         x: country_dataset['timeseries_dates'],
-        y: country_dataset['subseries'][subregion]['total'][series_key],
+        y: country_dataset['total'][series_key],
         type: 'line',
-        name: subregion,
+        name: '<%= country_name %>',
       };
       if (data_is_cumulative) {
         data.y = cumulative_to_delta(data.y);
         data.type = 'bar';
       }
       traces.push(data);
+      $('#'+graph_id+'_row .graph-title').text($('#'+graph_id+'_row .graph-title').text().replace(' in states and territories that report it', ''));
     }
 
     if (traces.length > 0) {
@@ -188,5 +209,12 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
   optional_trace_over_time('graph_hospital_current', 'current_hospitalized', false);
   optional_trace_over_time('graph_icu_current', 'current_icu', false);
   optional_trace_over_time('graph_ventilators_current', 'current_ventilators', false);
+
+  // optional_stacked_bar_over_time is in site.js
+  optional_stacked_bar_over_time(country_dataset, 'graph_sources', 'sources', false);
+  optional_stacked_bar_over_time(country_dataset, 'graph_community', 'sources', true, function(key) {
+    return (key.indexOf('Locally acquired') == 0);
+  }, {});
+  optional_stacked_bar_over_time(country_dataset, 'graph_age_groups', 'age_groups', false);
 
 </script>
