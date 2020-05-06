@@ -8,9 +8,12 @@
       
       <div class="card-body">
         <a href="<%= config[:site_url] %>/country/<%= country_iso.downcase %>.html">All of <%= country_iso %></a>
-        <% states.each do |state_code, state_name| %>
+        <% states.sort_by { |k, v| k }.each do |state_code, state_name| %>
         , <a href="<%= config[:site_url] %>/country/<%= country_iso.downcase %>/<%= state_code.downcase %>.html"><%= state_code %></a>
         <% end %>
+        <br />
+        <br />
+        <a href="<%= config[:site_url] %>/country/<%= country_iso.downcase %>/change.html">Week by week change for <%= country_iso %></a>
       </div>
     </div>
   </div>

@@ -60,55 +60,8 @@ for (var country_iso in covid19_dataset_latest_totals['countries']) {
   var countryCol = $('<td>').appendTo(row);
   $('<a>').text(country_name).attr('href', '/country/' + country_iso.toLowerCase() + '.html').appendTo(countryCol);
   
-  function addEntry(row, key) {
-    var latest = country_latest[key];
-    var week1 = country_lastweek[key];
-    var week2 = country_last2week[key];
-
-    var curr_delta = latest - week1;
-    var prev_delta = week1 - week2;
-
-    var from_what = $('<small style="margin-left: 5px; color: #ccc;">');
-    from_what.text('from ' + prev_delta.toLocaleString());
-
-    $('<td>')
-      .append($('<span>').text((curr_delta || '').toLocaleString()))
-      .append(from_what)
-      .attr('data-order', curr_delta)
-      .appendTo(row);
-    
-    var change_percent;
-    var delta_of_deltas;
-    if (prev_delta == 0 || curr_delta == 0) {
-      $(row).remove();
-      return;
-    } else {
-      delta_of_deltas = curr_delta - prev_delta;
-      change_percent = parseInt(delta_of_deltas * 100 / prev_delta).toLocaleString();
-    }
-
-    var dir = (change_percent >= 0 ? 'up' : 'down');
-    var color = (change_percent >= 0 ? '#b66' : '#6b6');
-
-    var change = $('<span>');
-    change.append($('<i class="fas fa-arrow-'+dir+'" />'));
-    change.append($('<span>&nbsp;' + Math.abs(change_percent) + '%</span>'));
-    change.css('color', color);
-
-    var of_what = $('<small style="margin-left: 5px; color: #ccc;">');
-    var thing = (key == 'deaths' ? 'deaths' : 'cases');
-    var more_or_less = (delta_of_deltas >= 0 ? 'more' : 'fewer');
-    of_what.text('or ' + Math.abs(delta_of_deltas).toLocaleString() + ' '+more_or_less+' ' + thing);
-
-    $('<td>')
-      .append(change)
-      .append(of_what)
-      .attr('data-order', delta_of_deltas)
-      .appendTo(row);
-  }
-
-  addEntry(row, 'confirmed');
-  addEntry(row, 'deaths');
+  add_delta_table_row_entry(country_latest, country_lastweek, country_last2week, row, 'confirmed');
+  add_delta_table_row_entry(country_latest, country_lastweek, country_last2week, row, 'deaths');
 }
 
 $(document).ready(function() {

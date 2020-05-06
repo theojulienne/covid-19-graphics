@@ -33,6 +33,16 @@ BaseData::COUNTRY_TO_ISO_NAME.each do |country_iso, country_name|
   }
 
   if has_state_pages
+    proxy "/country/#{country_iso.downcase}/change.html", "/country-state-delta-template.html", :locals => {
+      country_iso: country_iso,
+      country_name: country_name,
+      title: country_name,
+      datasets: ["by_country/#{country_iso}"],
+  
+      has_state_pages: has_state_pages,
+      states: states,
+    }
+
     states.each do |state_code, state_name|
       proxy "/country/#{country_iso.downcase}/#{state_code.downcase}.html", "/state-template.html", :locals => {
         country_iso: country_iso,
@@ -50,6 +60,7 @@ BaseData::COUNTRY_TO_ISO_NAME.each do |country_iso, country_name|
 end
 
 ignore '/country-template.html'
+ignore '/country-state-delta-template.html'
 ignore '/state-template.html'
 
 # With alternative layout

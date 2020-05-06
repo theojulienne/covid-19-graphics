@@ -1,0 +1,100 @@
+---
+title: COVID-19 Weekly Change in Country
+datasets: ['dataset_latest_totals', 'dataset_world_totals']
+---
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">COVID-19 weekly delta by state in <%= country_name %></h1>
+</div>
+
+<div class="row">
+
+  <script>
+    var country_dataset = covid19_dataset_country_<%= country_iso.downcase %>;
+
+    var latest_numbers = {};
+    for (var stat in country_dataset['total']) {
+      var data = country_dataset['total'][stat];
+      latest_numbers[stat] = data[data.length - 1];
+    }
+  </script>
+
+  <%= partial(:top_totals) %>
+
+</div>
+
+<%= partial(:state_country_selector, locals: { country_iso: country_iso }) %>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">States - week on week change in cases and deaths</h6>
+  </div>
+  <div class="card-body">
+    This table gives a good comparison of the current status of different states based solely on the confirmed cases and deaths in the last 14 days, comparing the latest 7 days to the previous 7 days.
+    <div class="table-responsive">
+      <div id="dataTable_wrapper" class="dataTables_wrapper dt-bootstrap4">
+      <div class="row"><div class="col-sm-12"><table class="table table-bordered dataTable" id="dataTable" width="100%" cellspacing="0" role="grid" aria-describedby="dataTable_info" style="width: 100%;">
+        <thead>
+          <tr role="row">
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 20%;">State</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 20%;">Confirmed cases last 7d</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 20%;">Confirmed change</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 20%;">Deaths last 7d</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 20%;">Deaths change</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="<%= config[:site_url] %>/vendor/datatables/jquery.dataTables.min.js"></script>
+<script src="<%= config[:site_url] %>/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+<script>
+function getValueFromTimeAgo(ts, distance) {
+    for (var i = distance; i >= 0; i--) {
+        if (ts[ts.length - 1 - i] != null)
+            return ts[ts.length - 1 - i];
+    }
+}
+
+function makeTotalsForDataSet(ds) {
+  return {
+    'latest': {
+      'confirmed': getValueFromTimeAgo(ds['total']['confirmed'], 0),
+      'deaths':    getValueFromTimeAgo(ds['total']['deaths'], 0),
+    },
+    'back_1week': {
+      'confirmed': getValueFromTimeAgo(ds['total']['confirmed'], 7),
+      'deaths':    getValueFromTimeAgo(ds['total']['deaths'], 7),
+    },
+    'back_2week': {
+      'confirmed': getValueFromTimeAgo(ds['total']['confirmed'], 14),
+      'deaths':    getValueFromTimeAgo(ds['total']['deaths'], 14),
+    }
+  };
+}
+
+for (var state_code in country_dataset['subseries']) {
+  var totals = makeTotalsForDataSet(country_dataset['subseries'][state_code]);
+  var state_latest = totals['latest'];
+  var state_lastweek = totals['back_1week'];
+  var state_last2week = totals['back_2week'];
+
+  var row = $('<tr role="row">').attr('class', 'even').appendTo('#dataTable tbody');
+  var countryCol = $('<td>').appendTo(row);
+  $('<a>').text(state_code).attr('href', '/country/<%= country_iso.downcase %>/' + state_code.toLowerCase() + '.html').appendTo(countryCol);
+
+  add_delta_table_row_entry(state_latest, state_lastweek, state_last2week, row, 'confirmed');
+  add_delta_table_row_entry(state_latest, state_lastweek, state_last2week, row, 'deaths');
+}
+
+$(document).ready(function() {
+  $('#dataTable').DataTable({
+    "order": [[ 3, "desc" ]],
+    "paging": false
+  });
+});
+</script>

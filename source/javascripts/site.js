@@ -317,3 +317,53 @@ function optional_stacked_bar_over_time(dataset, graph_id, dataset_key, convert_
     $('#' + graph_id + '_row').remove();
   }
 }
+
+function add_delta_table_row_entry(latest, lastweek, last2week, row, key) {
+  var week0 = latest[key];
+  var week1 = lastweek[key];
+  var week2 = last2week[key];
+
+  var curr_delta = week0 - week1;
+  var prev_delta = week1 - week2;
+
+  var from_what = $('<small style="margin-left: 5px; color: #ccc;">');
+  from_what.text('from ' + prev_delta.toLocaleString());
+
+  $('<td>')
+    .append($('<span>').text((curr_delta || '0').toLocaleString()))
+    .append(from_what)
+    .attr('data-order', curr_delta)
+    .appendTo(row);
+  
+  var change_percent;
+  var delta_of_deltas;
+  if (prev_delta == 0 || curr_delta == 0) {
+    $('<td>')
+      .text('-')
+      .attr('data-order', 0)
+      .appendTo(row);
+    return;
+  } else {
+    delta_of_deltas = curr_delta - prev_delta;
+    change_percent = parseInt(delta_of_deltas * 100 / prev_delta).toLocaleString();
+  }
+
+  var dir = (change_percent >= 0 ? 'up' : 'down');
+  var color = (change_percent >= 0 ? '#b66' : '#6b6');
+
+  var change = $('<span>');
+  change.append($('<i class="fas fa-arrow-'+dir+'" />'));
+  change.append($('<span>&nbsp;' + Math.abs(change_percent) + '%</span>'));
+  change.css('color', color);
+
+  var of_what = $('<small style="margin-left: 5px; color: #ccc;">');
+  var thing = (key == 'deaths' ? 'deaths' : 'cases');
+  var more_or_less = (delta_of_deltas >= 0 ? 'more' : 'fewer');
+  of_what.text('or ' + Math.abs(delta_of_deltas).toLocaleString() + ' '+more_or_less+' ' + thing);
+
+  $('<td>')
+    .append(change)
+    .append(of_what)
+    .attr('data-order', delta_of_deltas)
+    .appendTo(row);
+}
