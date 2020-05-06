@@ -1,0 +1,120 @@
+---
+title: COVID-19 Weekly Change
+datasets: ['dataset_latest_totals', 'dataset_world_totals']
+---
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">COVID-19 weekly delta by country</h1>
+</div>
+
+<div class="row">
+
+  <script>
+    var latest_numbers = {};
+    for (var stat in covid19_dataset_world_totals['total']) {
+      var data = covid19_dataset_world_totals['total'][stat];
+      latest_numbers[stat] = data[data.length - 1];
+    }
+  </script>
+
+  <%= partial(:top_totals) %>
+
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Countries - week on week change in cases and deaths</h6>
+  </div>
+  <div class="card-body">
+    This table gives a good comparison of the current state of different countries based solely on the confirmed cases and deaths in the last 14 days, comparing the latest 7 days to the previous 7 days.
+    <div class="table-responsive">
+      <div id="dataTable_wrapper" class="dataTables_wrapper dt-bootstrap4">
+      <div class="row"><div class="col-sm-12"><table class="table table-bordered dataTable" id="dataTable" width="100%" cellspacing="0" role="grid" aria-describedby="dataTable_info" style="width: 100%;">
+        <thead>
+          <tr role="row">
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 20%;">Country</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 20%;">Confirmed cases last 7d</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 20%;">Confirmed change</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 20%;">Deaths last 7d</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 20%;">Deaths change</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="<%= config[:site_url] %>/vendor/datatables/jquery.dataTables.min.js"></script>
+<script src="<%= config[:site_url] %>/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+<script>
+for (var country_iso in covid19_dataset_latest_totals['countries']) {
+  var country_latest = covid19_dataset_latest_totals['countries'][country_iso]['latest'];
+  var country_lastweek = covid19_dataset_latest_totals['countries'][country_iso]['back_1week'];
+  var country_last2week = covid19_dataset_latest_totals['countries'][country_iso]['back_2week'];
+
+  var country_name = covid19_dataset_country_names[country_iso];
+
+  var row = $('<tr role="row">').attr('class', 'even').appendTo('#dataTable tbody');
+  var countryCol = $('<td>').appendTo(row);
+  $('<a>').text(country_name).attr('href', '/country/' + country_iso.toLowerCase() + '.html').appendTo(countryCol);
+  
+  function addEntry(row, key) {
+    var latest = country_latest[key];
+    var week1 = country_lastweek[key];
+    var week2 = country_last2week[key];
+
+    var curr_delta = latest - week1;
+    var prev_delta = week1 - week2;
+
+    var from_what = $('<small style="margin-left: 5px; color: #ccc;">');
+    from_what.text('from ' + prev_delta.toLocaleString());
+
+    $('<td>')
+      .append($('<span>').text((curr_delta || '').toLocaleString()))
+      .append(from_what)
+      .attr('data-order', curr_delta)
+      .appendTo(row);
+    
+    var change_percent;
+    var delta_of_deltas;
+    if (prev_delta == 0 || curr_delta == 0) {
+      $(row).remove();
+      return;
+    } else {
+      delta_of_deltas = curr_delta - prev_delta;
+      change_percent = parseInt(delta_of_deltas * 100 / prev_delta).toLocaleString();
+    }
+
+    var dir = (change_percent >= 0 ? 'up' : 'down');
+    var color = (change_percent >= 0 ? '#b66' : '#6b6');
+
+    var change = $('<span>');
+    change.append($('<i class="fas fa-arrow-'+dir+'" />'));
+    change.append($('<span>&nbsp;' + Math.abs(change_percent) + '%</span>'));
+    change.css('color', color);
+
+    var of_what = $('<small style="margin-left: 5px; color: #ccc;">');
+    var thing = (key == 'deaths' ? 'deaths' : 'cases');
+    var more_or_less = (delta_of_deltas >= 0 ? 'more' : 'fewer');
+    of_what.text('or ' + Math.abs(delta_of_deltas).toLocaleString() + ' '+more_or_less+' ' + thing);
+
+    $('<td>')
+      .append(change)
+      .append(of_what)
+      .attr('data-order', delta_of_deltas)
+      .appendTo(row);
+  }
+
+  addEntry(row, 'confirmed');
+  addEntry(row, 'deaths');
+}
+
+$(document).ready(function() {
+  $('#dataTable').DataTable({
+    "order": [[ 3, "desc" ]],
+    "paging": false
+  });
+});
+</script>
