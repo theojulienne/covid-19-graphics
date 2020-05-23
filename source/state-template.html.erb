@@ -26,12 +26,14 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
 
 <%= partial(:state_country_selector, locals: { country_iso: country_iso }) %>
 
-<%= partial(:standard_graph_container, :locals => { :title => "Total cases of COVID-19 in #{state_name}, #{country_name} comparison (log scale, days since over 100 cases)", :graph_id => "graph_confirmed_realigned_log" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Rolling 2 weeks cases of COVID-19 in #{state_name}, #{country_name} comparison (log scale, days since over 100 cases in 2 weeks)", :graph_id => "graph_confirmed_rolling" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Cumulative cases of COVID-19 in #{state_name}, #{country_name} comparison (log scale, days since over 100 cases)", :graph_id => "graph_confirmed_realigned_log" }) %>
 
 <%= partial(:standard_graph_container, :locals => { :title => "Total cases of COVID-19 in #{state_name}, #{country_name}", :graph_id => "graph_overview" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "New cases per day", :graph_id => "graph_new_cases" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Tests per day", :graph_id => "graph_tests" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Deaths per day", :graph_id => "graph_deaths" }) %>
+<%= partial(:standard_graph_container, :locals => { :title => "Rolling 2 weeks deaths from COVID-19 in #{state_name}, #{country_name} comparison (log scale, days since over 10 deaths in 2 weeks)", :graph_id => "graph_deaths_rolling" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Deaths from COVID-19 in #{state_name}, #{country_name} comparison (log scale, days since over 10 deaths)", :graph_id => "graph_deaths_realigned_log" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Hospital admissions for COVID-19 per day", :graph_id => "graph_hospital_admissions" }) %>
 <%= partial(:standard_graph_container, :locals => { :title => "Cases currently hospitalised", :graph_id => "graph_hospital_current" }) %>
@@ -68,8 +70,12 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
   Plotly.newPlot('graph_new_cases', limit_to_biggest_series(new_cases, 10), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
 
   // we want the confirmed and deaths for the country, plus the top 10 countries
-  plotly_log_graph_vs_top('graph_confirmed_realigned_log', null, lines_by_type['confirmed'], covid19_dataset_top10, 'confirmed');
-  plotly_log_graph_vs_top('graph_deaths_realigned_log', null, lines_by_type['deaths'], covid19_dataset_top10_by_deaths, 'deaths');
+  plotly_log_graph_vs_top('graph_confirmed_realigned_log', null, lines_by_type['confirmed'], covid19_dataset_top10, 'confirmed', {});
+  plotly_log_graph_vs_top('graph_deaths_realigned_log', null, lines_by_type['deaths'], covid19_dataset_top10_by_deaths, 'deaths', {});
+
+  // same confirmed cases graph, but rolling
+  plotly_log_graph_vs_top('graph_confirmed_rolling', null, lines_by_type['confirmed'], covid19_dataset_top10, 'confirmed', {showDoublingLines: false, mapFn: trace_to_rolling_avg, ymin: 0});
+  plotly_log_graph_vs_top('graph_deaths_rolling', null, lines_by_type['deaths'], covid19_dataset_top10, 'deaths', {showDoublingLines: false, mapFn: trace_to_rolling_avg, ymin: 0});
 
   if (state_dataset['total']['tested']) {
     var tested_data = [];

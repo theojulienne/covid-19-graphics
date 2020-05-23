@@ -258,7 +258,19 @@ function limit_to_biggest_series_group_rest(traces, limit) {
 }
 
 //
-function plotly_log_graph_vs_top(id, skip_country_iso, main_line, top10_dataset, field) {
+function plotly_log_graph_vs_top(id, skip_country_iso, main_line, top10_dataset, field, options) {
+  var default_threshold = 100;
+  var default_ymin = 2;
+  if (field == 'deaths') {
+    default_threshold = 10;
+    default_ymin = 1;
+  }
+  var options = $.extend({
+    // defaults
+    showDoublingLines: true,
+    threshold: default_threshold,
+    ymin: default_ymin,
+  }, options);
   // we want the confirmed and deaths for the country, plus the top 10 countries
   var lines_log = [];
   for (var country_iso in top10_dataset['subseries']) {
@@ -270,15 +282,28 @@ function plotly_log_graph_vs_top(id, skip_country_iso, main_line, top10_dataset,
   
   lines_log.push($.extend({}, main_line, {line: {color: '#ff0000'}}));
 
-  var threshold = 100;
-  var ymin = 2;
-  if (field == 'deaths') {
-    threshold = 10;
-    ymin = 1;
+  if (options.mapFn) {
+    for (var i in lines_log) {
+      lines_log[i] = options.mapFn(lines_log[i]);
+    }
   }
 
+  var threshold = options.threshold;
+  var ymin = options.ymin;
+
   if (main_line.y[main_line.y.length - 1] > threshold) {
-    plotly_log_graph_with_doubling_lines(id, shift_graph_to_threshold(lines_log, threshold), ymin, 7, shift_graph_to_threshold([main_line], threshold)[0]);
+    var traces = shift_graph_to_threshold(lines_log, threshold);
+    var ymax = 7;
+    if (options.showDoublingLines) {
+      plotly_log_graph_with_doubling_lines(id, traces, ymin, ymax, shift_graph_to_threshold([main_line], threshold)[0]);
+    } else {
+      Plotly.newPlot(
+        id,
+        traces,
+        $.extend({}, default_layout, {yaxis: {type: "log", range: [ymin, ymax]}, xaxis: {rangemode: "nonnegative", autorange: true}}),
+        $.extend({}, default_config)
+      );
+    }
   } else {
     $('#'+id+'_row').remove();
   }
@@ -366,4 +391,17 @@ function add_delta_table_row_entry(latest, lastweek, last2week, row, key) {
     .append(of_what)
     .attr('data-order', delta_of_deltas)
     .appendTo(row);
+}
+
+function trace_to_rolling_avg(line) {
+  var rolling_window = 14;
+  var xs = line.x;
+  var ys = line.y;
+  var new_xs = [];
+  var new_ys = [];
+  for (var i = rolling_window; i < xs.length; i++) {
+    new_xs.push(xs[i]);
+    new_ys.push(ys[i] - ys[i - rolling_window]);
+  }
+  return $.extend({}, line, {x: new_xs, y: new_ys});
 }
