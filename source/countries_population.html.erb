@@ -1,0 +1,93 @@
+---
+title: COVID-19 Weekly Change
+datasets: ['dataset_latest_totals', 'dataset_world_totals']
+---
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">COVID-19 totals by population</h1>
+</div>
+
+<div class="row">
+
+  <script>
+    var latest_numbers = {};
+    for (var stat in covid19_dataset_world_totals['total']) {
+      var data = covid19_dataset_world_totals['total'][stat];
+      latest_numbers[stat] = data[data.length - 1];
+    }
+  </script>
+
+  <%= partial(:top_totals) %>
+
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Countries - cases and deaths relative to population</h6>
+  </div>
+  <div class="card-body">
+    This table shows how the confirmed cases and deaths in each country compare to the population by showing a "1 in N" number which is the country's population divided by the total.
+    <div class="table-responsive">
+      <div id="dataTable_wrapper" class="dataTables_wrapper dt-bootstrap4">
+      <div class="row"><div class="col-sm-12"><table class="table table-bordered dataTable" id="dataTable" width="100%" cellspacing="0" role="grid" aria-describedby="dataTable_info" style="width: 100%;">
+        <thead>
+          <tr role="row">
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 25%;">Country</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 25%;">Population</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 25%;">Confirmed cases</th>
+            <th class="sorting" tabindex="0" aria-controls="dataTable" rowspan="1" colspan="1" style="width: 25%;">Deaths</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="<%= config[:site_url] %>/vendor/datatables/jquery.dataTables.min.js"></script>
+<script src="<%= config[:site_url] %>/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+<script>
+function add_scaled_cell(row, total, population) {
+  var cell = $('<td>').appendTo(row);
+  if (!population || !total || population == 0 || total == 0) {
+      return false;
+  }
+  var perItem = parseInt(population / total);
+  cell.attr('data-order', perItem);
+  cell.text('1 in ' + perItem.toLocaleString());
+
+  var of_what = $('<small style="margin-left: 5px; color: #ccc;">');
+  of_what.text('(' + total.toLocaleString() + ' total)');
+
+  cell.append(of_what);
+
+  return true;
+}
+
+for (var country_iso in covid19_dataset_latest_totals['countries']) {
+  var country_latest = covid19_dataset_latest_totals['countries'][country_iso]['latest'];
+
+  var country_name = covid19_dataset_country_names[country_iso];
+  var country_population = covid19_dataset_populations[country_iso];
+  if (!country_population) continue;
+
+  var row = $('<tr role="row">').attr('class', 'even').appendTo('#dataTable tbody');
+  var countryCol = $('<td>').appendTo(row);
+  $('<a>').text(country_name).attr('href', '/country/' + country_iso.toLowerCase() + '.html').appendTo(countryCol);
+  var popCol = $('<td>').appendTo(row);
+  popCol.text(country_population.toLocaleString());
+
+  var ok = true;
+  ok = ok && add_scaled_cell(row, country_latest['confirmed'], country_population);
+  ok = ok && add_scaled_cell(row, country_latest['deaths'], country_population);
+  if (!ok) row.remove();
+}
+
+$(document).ready(function() {
+  $('#dataTable').DataTable({
+    "order": [[ 3, "asc" ]],
+    "paging": false
+  });
+});
+</script>
