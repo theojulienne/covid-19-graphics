@@ -207,6 +207,9 @@ function limit_to_biggest_series(traces, limit, visibility) {
 }
 
 function combine_trace_data(trace_a, trace_b) {
+  if (trace_a != null) trace_a = $.extend(true, {}, trace_a);
+  if (trace_b != null) trace_b = $.extend(true, {}, trace_b);
+
   if (trace_a == null) return trace_b;
   if (trace_b == null) return trace_a;
 
@@ -404,4 +407,23 @@ function trace_to_rolling_avg(line) {
     new_ys.push(ys[i] - ys[i - rolling_window]);
   }
   return $.extend({}, line, {x: new_xs, y: new_ys});
+}
+
+function trace_percent_rolling(num_trace, den_trace, window_size) {
+  var new_trace = [];
+  for (var i = 0; i < num_trace.length; i++) {
+    var window_start = i - window_size;
+    if (window_start < 0) window_start = 0;
+
+    var num_window = num_trace.slice(window_start, i).reduce(function(a, b){ return a + b; }, 0);
+    var den_window = den_trace.slice(window_start, i).reduce(function(a, b){ return a + b; }, 0);
+
+    var num = num_window;
+    var den = den_window;
+    var value = 0;
+    if (den != 0)
+      value = (num / den) * 100;
+    new_trace.push(value);
+  }
+  return new_trace;
 }

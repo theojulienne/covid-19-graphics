@@ -134,14 +134,45 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
   } else {
     tested_data = limit_to_biggest_series_group_rest(tested_data, 9);
 
+    var summed_tested = null;
+    for (var i in tested_data) {
+      var ts = tested_data[i];
+      summed_tested = combine_trace_data(summed_tested, ts);
+    }
+
+    var confirmed_ts = cumulative_to_delta(country_dataset['total']['confirmed']);
+    var tested_ts = summed_tested.y;
+
     tested_data.push({
       x: country_dataset['timeseries_dates'],
-      y: cumulative_to_delta(country_dataset['total']['confirmed']),
+      y: confirmed_ts,
       type: 'line',
       name: 'Confirmed cases (country)',
     });
 
-    Plotly.newPlot('graph_tests', tested_data, $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
+    tested_data.push({
+      x: country_dataset['timeseries_dates'],
+      y: trace_percent_rolling(confirmed_ts, tested_ts, 7),
+      type: 'line',
+      name: '% tests positive (country, 1w rolling avg)',
+      yaxis: 'y2',
+      line: {
+        color: '#f33',
+        width: 2
+      }
+    });
+
+    Plotly.newPlot('graph_tests', tested_data, $.extend({}, default_layout, {
+      barmode: 'stack',
+      yaxis: {
+        rangemode: 'tozero'
+      },
+      "yaxis2": {
+        range: [0, 100],
+        overlaying: 'y',
+        side: 'right'
+      }
+    }), $.extend({}, default_config));
   }
 
   // deaths

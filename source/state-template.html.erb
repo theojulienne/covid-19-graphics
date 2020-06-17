@@ -78,21 +78,45 @@ datasets: ['dataset_top10', 'dataset_top10_by_deaths']
   plotly_log_graph_vs_top('graph_deaths_rolling', null, lines_by_type['deaths'], covid19_dataset_top10, 'deaths', {showDoublingLines: false, mapFn: trace_to_rolling_avg, ymin: 0});
 
   if (state_dataset['total']['tested']) {
+    var tested_ts = cumulative_to_delta(state_dataset['total']['tested']);
+    var confirmed_ts = cumulative_to_delta(state_dataset['total']['confirmed']);
+
     var tested_data = [];
     tested_data.push({
       x: country_dataset['timeseries_dates'],
-      y: cumulative_to_delta(state_dataset['total']['tested']),
+      y: tested_ts,
       type: 'bar',
       name: 'Tests conducted',
     });
     tested_data.push({
       x: country_dataset['timeseries_dates'],
-      y: cumulative_to_delta(state_dataset['total']['confirmed']),
+      y: confirmed_ts,
       type: 'line',
       name: 'Confirmed cases',
     });
+    tested_data.push({
+      x: country_dataset['timeseries_dates'],
+      y: trace_percent_rolling(confirmed_ts, tested_ts, 7),
+      type: 'line',
+      name: '% tests positive (1w rolling avg)',
+      yaxis: 'y2',
+      line: {
+        color: '#f33',
+        width: 2
+      }
+    });
 
-    Plotly.newPlot('graph_tests', limit_to_biggest_series(tested_data, 10), $.extend({}, default_layout, {barmode: 'stack'}), $.extend({}, default_config));
+    Plotly.newPlot('graph_tests', limit_to_biggest_series(tested_data, 10), $.extend({}, default_layout, {
+      barmode: 'stack',
+      yaxis: {
+        rangemode: 'tozero'
+      },
+      "yaxis2": {
+        range: [0, 100],
+        overlaying: 'y',
+        side: 'right'
+      }
+    }), $.extend({}, default_config));
   } else {
     // no data, so remove the whole row
     $('#graph_tests_row').remove();
