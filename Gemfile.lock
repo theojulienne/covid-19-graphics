@@ -15,7 +15,6 @@ GEM
       coffee-script-source
       execjs
     coffee-script-source (1.12.2)
-    commonjs (0.2.7)
     concurrent-ruby (1.1.6)
     contracts (0.13.0)
     dotenv (2.7.5)
@@ -33,9 +32,6 @@ GEM
     i18n (0.9.5)
       concurrent-ruby (~> 1.0)
     kramdown (1.17.0)
-    less (2.6.0)
-      commonjs (~> 0.2.7)
-    libv8 (7.3.492.27.1)
     listen (3.0.8)
       rb-fsevent (~> 0.9, >= 0.9.4)
       rb-inotify (~> 0.9, >= 0.9.7)
@@ -74,8 +70,6 @@ GEM
       servolux
       tilt (~> 2.0.9)
       uglifier (~> 3.0)
-    mini_racer (0.2.9)
-      libv8 (>= 6.9.411)
     minitest (5.14.0)
     padrino-helpers (0.13.3.4)
       i18n (~> 0.6, >= 0.6.7)
@@ -85,7 +79,7 @@ GEM
       activesupport (>= 3.1)
     parallel (1.19.1)
     public_suffix (4.0.3)
-    rack (2.2.2)
+    rack (2.2.3)
     rb-fsevent (0.10.3)
     rb-inotify (0.10.1)
       ffi (~> 1.0)
@@ -105,11 +99,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  less
-  libv8
   middleman (~> 4.2)
   middleman-autoprefixer (~> 2.7)
-  mini_racer
   tzinfo-data
   wdm (~> 0.1)
 
