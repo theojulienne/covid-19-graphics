@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-161561782-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-161561782-1');
+  </script>
+
+
+  <title>COVID-19 Worldwide Control Measures - covid.graphics</title>
+  <link href="stylesheets/site.css" rel="stylesheet" />
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <script src="vendor/jquery/jquery.min.js"></script>
+  <script src="javascripts/site.js"></script>
+
+  <script>
+    var default_layout = {
+      autosize: true,
+      margin: { t: 0, l:30, r:15, b:45 },
+      legend: {"orientation": "h", "traceorder": "normal"}
+    };
+    var default_config = {
+      displayModeBar: false
+    };
+
+
+    var loaded_datasets = {};
+    var country_datasets = {};
+    function covid19_dataset_callback(dataset_name, dataset, metadata) {
+      loaded_datasets[dataset_name] = dataset;
+      if (metadata['country_iso']) {
+        country_datasets[metadata['country_iso']] = dataset;
+      }
+    }
+
+    function scale_permil(ts, country_code) {
+      var millions = covid19_dataset_populations[country_code] / 1000000;
+      return ts.map(function (x) {
+              return x / millions;
+      });
+    }
+    function scale_none(ts, country_code) {
+      return ts;
+    }
+
+    function country_series_scaled(covid19_dataset, data, country_code, scale_function, legend_suffix) {
+      var legend = covid19_dataset_country_names[country_code];
+      var x_axis = covid19_dataset['timeseries_dates'];
+      var ret = {};
+      for (var stat in data['total']) {
+        var statTitle = stat[0].toUpperCase() + stat.slice(1);
+        ret[stat] = {
+              x: x_axis,
+              y: scale_function(data['total'][stat], country_code),
+              name: legend + ', ' + statTitle + legend_suffix
+        };
+      }
+      return ret;
+    }
+
+    function cumulative_to_delta(points) {
+      var relative = [];
+      var last = 0;
+      for (var i in points) {
+        var value = points[i];
+        if (last == null) {
+          relative.push(0);
+        } else {
+          relative.push(Math.max(0, value - last));
+        }
+        last = value;
+      }
+      return relative;
+    }
+  </script>
+
+  <script src="https://theojulienne.github.io/covid-19-data/dataset.js"></script>
+  <script src="https://theojulienne.github.io/covid-19-data/dataset_world_totals.js"></script>
+  <script src="https://theojulienne.github.io/covid-19-data/dataset_world_events.js"></script>
+  <script src="https://theojulienne.github.io/covid-19-data/populations.js"></script>
+  <script src="https://theojulienne.github.io/covid-19-data/countries.js"></script>
+
+  <!-- Custom fonts for this template-->
+  <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+  <!-- Custom styles for this template-->
+  <link href="stylesheets/sb-admin-2.min.css" rel="stylesheet" />
+
+  <link href="vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+
+  <style>
+  .table .sorting_1,
+  .table .sorting_desc,
+  .table .sorting_asc {
+    background-color: #f6f6f6;
+  }
+  </style>
+
+</head>
+
+<body id="page-top">
+
+  <!-- Page Wrapper -->
+  <div id="wrapper">
+
+    <!-- Sidebar -->
+    <ul class="navbar-nav bg-gradient-dark sidebar sidebar-dark accordion" id="accordionSidebar">
+
+      <!-- Sidebar - Brand -->
+      <a class="sidebar-brand d-none d-md-flex align-items-center justify-content-center" href="/index.html">
+        <div class="sidebar-brand-text mx-3">covid.graphics</div>
+      </a>
+
+      <!-- Divider -->
+      <hr class="sidebar-divider my-0">
+
+      <!-- Nav Item - Dashboard -->
+      <li class="nav-item active">
+        <a class="nav-link" href="/index.html">
+          <i class="fas fa-globe-americas"></i>
+          <span>COVID-19 Worldwide</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/countries.html">
+          <i class="fas fa-table"></i>
+          <span>Country summary table</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/countries_delta.html">
+          <i class="fas fa-arrow-up"></i>
+          <span>Week by week change</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/countries_population.html">
+          <i class="fas fa-users"></i>
+          <span>Population relative totals</span></a>
+      </li>
+
+      <!-- Divider -->
+      <hr class="sidebar-divider">
+
+      <!-- Heading -->
+      <div class="sidebar-heading">
+        MORE DATA
+      </div>
+
+      <!-- Nav Item - Pages Collapse Menu -->
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+          <i class="fas fa-flag"></i>
+          <span>By Country</span>
+        </a>
+        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+          <div class="bg-white py-2 collapse-inner rounded">
+            <h6 class="collapse-header">Countries:</h6>
+            <a class="collapse-item" href="/country/afg.html">Afghanistan</a>
+            <a class="collapse-item" href="/country/alb.html">Albania</a>
+            <a class="collapse-item" href="/country/dza.html">Algeria</a>
+            <a class="collapse-item" href="/country/and.html">Andorra</a>
+            <a class="collapse-item" href="/country/atg.html">Antigua & Barbuda</a>
+            <a class="collapse-item" href="/country/arg.html">Argentina</a>
+            <a class="collapse-item" href="/country/arm.html">Armenia</a>
+            <a class="collapse-item" href="/country/aus.html">Australia</a>
+            <a class="collapse-item" href="/country/aut.html">Austria</a>
+            <a class="collapse-item" href="/country/aze.html">Azerbaijan</a>
+            <a class="collapse-item" href="/country/bhs.html">Bahamas</a>
+            <a class="collapse-item" href="/country/bhr.html">Bahrain</a>
+            <a class="collapse-item" href="/country/bgd.html">Bangladesh</a>
+            <a class="collapse-item" href="/country/brb.html">Barbados</a>
+            <a class="collapse-item" href="/country/blr.html">Belarus</a>
+            <a class="collapse-item" href="/country/bel.html">Belgium</a>
+            <a class="collapse-item" href="/country/ben.html">Benin</a>
+            <a class="collapse-item" href="/country/btn.html">Bhutan</a>
+            <a class="collapse-item" href="/country/bol.html">Bolivia</a>
+            <a class="collapse-item" href="/country/bih.html">Bosnia</a>
+            <a class="collapse-item" href="/country/bra.html">Brazil</a>
+            <a class="collapse-item" href="/country/brn.html">Brunei</a>
+            <a class="collapse-item" href="/country/bgr.html">Bulgaria</a>
+            <a class="collapse-item" href="/country/bfa.html">Burkina Faso</a>
+            <a class="collapse-item" href="/country/khm.html">Cambodia</a>
+            <a class="collapse-item" href="/country/cmr.html">Cameroon</a>
+            <a class="collapse-item" href="/country/can.html">Canada</a>
+            <a class="collapse-item" href="/country/caf.html">Central African Republic</a>
+            <a class="collapse-item" href="/country/tcd.html">Chad</a>
+            <a class="collapse-item" href="/country/chl.html">Chile</a>
+            <a class="collapse-item" href="/country/chn.html">China</a>
+            <a class="collapse-item" href="/country/col.html">Colombia</a>
+            <a class="collapse-item" href="/country/cog.html">Congo - Brazzaville</a>
+            <a class="collapse-item" href="/country/cod.html">Congo - Kinshasa</a>
+            <a class="collapse-item" href="/country/cri.html">Costa Rica</a>
+            <a class="collapse-item" href="/country/hrv.html">Croatia</a>
+            <a class="collapse-item" href="/country/cub.html">Cuba</a>
+            <a class="collapse-item" href="/country/cyp.html">Cyprus</a>
+            <a class="collapse-item" href="/country/cze.html">Czechia</a>
+            <a class="collapse-item" href="/country/civ.html">Côte d’Ivoire</a>
+            <a class="collapse-item" href="/country/dnk.html">Denmark</a>
+            <a class="collapse-item" href="/country/dji.html">Djibouti</a>
+            <a class="collapse-item" href="/country/dom.html">Dominican Republic</a>
+            <a class="collapse-item" href="/country/ecu.html">Ecuador</a>
+            <a class="collapse-item" href="/country/egy.html">Egypt</a>
+            <a class="collapse-item" href="/country/slv.html">El Salvador</a>
+            <a class="collapse-item" href="/country/gnq.html">Equatorial Guinea</a>
+            <a class="collapse-item" href="/country/est.html">Estonia</a>
+            <a class="collapse-item" href="/country/swz.html">Eswatini</a>
+            <a class="collapse-item" href="/country/eth.html">Ethiopia</a>
+            <a class="collapse-item" href="/country/fji.html">Fiji</a>
+            <a class="collapse-item" href="/country/fin.html">Finland</a>
+            <a class="collapse-item" href="/country/fra.html">France</a>
+            <a class="collapse-item" href="/country/gab.html">Gabon</a>
+            <a class="collapse-item" href="/country/gmb.html">Gambia</a>
+            <a class="collapse-item" href="/country/geo.html">Georgia</a>
+            <a class="collapse-item" href="/country/deu.html">Germany</a>
+            <a class="collapse-item" href="/country/gha.html">Ghana</a>
+            <a class="collapse-item" href="/country/grc.html">Greece</a>
+            <a class="collapse-item" href="/country/gtm.html">Guatemala</a>
+            <a class="collapse-item" href="/country/gin.html">Guinea</a>
+            <a class="collapse-item" href="/country/guy.html">Guyana</a>
+            <a class="collapse-item" href="/country/hnd.html">Honduras</a>
+            <a class="collapse-item" href="/country/hun.html">Hungary</a>
+            <a class="collapse-item" href="/country/isl.html">Iceland</a>
+            <a class="collapse-item" href="/country/ind.html">India</a>
+            <a class="collapse-item" href="/country/idn.html">Indonesia</a>
+            <a class="collapse-item" href="/country/irn.html">Iran</a>
+            <a class="collapse-item" href="/country/irq.html">Iraq</a>
+            <a class="collapse-item" href="/country/irl.html">Ireland</a>
+            <a class="collapse-item" href="/country/isr.html">Israel</a>
+            <a class="collapse-item" href="/country/ita.html">Italy</a>
+            <a class="collapse-item" href="/country/jam.html">Jamaica</a>
+            <a class="collapse-item" href="/country/jpn.html">Japan</a>
+            <a class="collapse-item" href="/country/jor.html">Jordan</a>
+            <a class="collapse-item" href="/country/kaz.html">Kazakhstan</a>
+            <a class="collapse-item" href="/country/ken.html">Kenya</a>
+            <a class="collapse-item" href="/country/rks.html">Kosovo</a>
+            <a class="collapse-item" href="/country/kwt.html">Kuwait</a>
+            <a class="collapse-item" href="/country/kgz.html">Kyrgyzstan</a>
+            <a class="collapse-item" href="/country/lva.html">Latvia</a>
+            <a class="collapse-item" href="/country/lbn.html">Lebanon</a>
+            <a class="collapse-item" href="/country/lbr.html">Liberia</a>
+            <a class="collapse-item" href="/country/lie.html">Liechtenstein</a>
+            <a class="collapse-item" href="/country/ltu.html">Lithuania</a>
+            <a class="collapse-item" href="/country/lux.html">Luxembourg</a>
+            <a class="collapse-item" href="/country/mys.html">Malaysia</a>
+            <a class="collapse-item" href="/country/mdv.html">Maldives</a>
+            <a class="collapse-item" href="/country/mlt.html">Malta</a>
+            <a class="collapse-item" href="/country/mtq.html">Martinique</a>
+            <a class="collapse-item" href="/country/mrt.html">Mauritania</a>
+            <a class="collapse-item" href="/country/mus.html">Mauritius</a>
+            <a class="collapse-item" href="/country/mex.html">Mexico</a>
+            <a class="collapse-item" href="/country/mda.html">Moldova</a>
+            <a class="collapse-item" href="/country/mco.html">Monaco</a>
+            <a class="collapse-item" href="/country/mng.html">Mongolia</a>
+            <a class="collapse-item" href="/country/mne.html">Montenegro</a>
+            <a class="collapse-item" href="/country/mar.html">Morocco</a>
+            <a class="collapse-item" href="/country/nam.html">Namibia</a>
+            <a class="collapse-item" href="/country/npl.html">Nepal</a>
+            <a class="collapse-item" href="/country/nld.html">Netherlands</a>
+            <a class="collapse-item" href="/country/nzl.html">New Zealand</a>
+            <a class="collapse-item" href="/country/nic.html">Nicaragua</a>
+            <a class="collapse-item" href="/country/nga.html">Nigeria</a>
+            <a class="collapse-item" href="/country/mkd.html">North Macedonia</a>
+            <a class="collapse-item" href="/country/nor.html">Norway</a>
+            <a class="collapse-item" href="/country/omn.html">Oman</a>
+            <a class="collapse-item" href="/country/pak.html">Pakistan</a>
+            <a class="collapse-item" href="/country/pan.html">Panama</a>
+            <a class="collapse-item" href="/country/pry.html">Paraguay</a>
+            <a class="collapse-item" href="/country/per.html">Peru</a>
+            <a class="collapse-item" href="/country/phl.html">Philippines</a>
+            <a class="collapse-item" href="/country/pol.html">Poland</a>
+            <a class="collapse-item" href="/country/prt.html">Portugal</a>
+            <a class="collapse-item" href="/country/qat.html">Qatar</a>
+            <a class="collapse-item" href="/country/rou.html">Romania</a>
+            <a class="collapse-item" href="/country/rus.html">Russia</a>
+            <a class="collapse-item" href="/country/rwa.html">Rwanda</a>
+            <a class="collapse-item" href="/country/smr.html">San Marino</a>
+            <a class="collapse-item" href="/country/sau.html">Saudi Arabia</a>
+            <a class="collapse-item" href="/country/sen.html">Senegal</a>
+            <a class="collapse-item" href="/country/srb.html">Serbia</a>
+            <a class="collapse-item" href="/country/syc.html">Seychelles</a>
+            <a class="collapse-item" href="/country/sgp.html">Singapore</a>
+            <a class="collapse-item" href="/country/svk.html">Slovakia</a>
+            <a class="collapse-item" href="/country/svn.html">Slovenia</a>
+            <a class="collapse-item" href="/country/som.html">Somalia</a>
+            <a class="collapse-item" href="/country/zaf.html">South Africa</a>
+            <a class="collapse-item" href="/country/kor.html">South Korea</a>
+            <a class="collapse-item" href="/country/esp.html">Spain</a>
+            <a class="collapse-item" href="/country/lka.html">Sri Lanka</a>
+            <a class="collapse-item" href="/country/lca.html">St. Lucia</a>
+            <a class="collapse-item" href="/country/vct.html">St. Vincent & Grenadines</a>
+            <a class="collapse-item" href="/country/sdn.html">Sudan</a>
+            <a class="collapse-item" href="/country/sur.html">Suriname</a>
+            <a class="collapse-item" href="/country/swe.html">Sweden</a>
+            <a class="collapse-item" href="/country/che.html">Switzerland</a>
+            <a class="collapse-item" href="/country/twn.html">Taiwan</a>
+            <a class="collapse-item" href="/country/tza.html">Tanzania</a>
+            <a class="collapse-item" href="/country/tha.html">Thailand</a>
+            <a class="collapse-item" href="/country/tgo.html">Togo</a>
+            <a class="collapse-item" href="/country/tto.html">Trinidad & Tobago</a>
+            <a class="collapse-item" href="/country/tun.html">Tunisia</a>
+            <a class="collapse-item" href="/country/tur.html">Turkey</a>
+            <a class="collapse-item" href="/country/gbr.html">UK</a>
+            <a class="collapse-item" href="/country/usa.html">US</a>
+            <a class="collapse-item" href="/country/ukr.html">Ukraine</a>
+            <a class="collapse-item" href="/country/are.html">United Arab Emirates</a>
+            <a class="collapse-item" href="/country/ury.html">Uruguay</a>
+            <a class="collapse-item" href="/country/uzb.html">Uzbekistan</a>
+            <a class="collapse-item" href="/country/vat.html">Vatican City</a>
+            <a class="collapse-item" href="/country/ven.html">Venezuela</a>
+            <a class="collapse-item" href="/country/vnm.html">Vietnam</a>
+            <a class="collapse-item" href="/country/zmb.html">Zambia</a>
+          </div>
+        </div>
+      </li>
+
+      <!-- Divider -->
+      <hr class="sidebar-divider">
+
+
+    </ul>
+    <!-- End of Sidebar -->
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+
+      <!-- Main Content -->
+      <div id="content">
+
+        <!-- Topbar -->
+        <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+          <!-- sidebar toggle -->
+          <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+            <i class="fa fa-bars"></i>
+          </button>
+
+          <a class="d-md-none align-items-center justify-content-center" href="/index.html">
+            <div class="">covid.graphics</div>
+          </a>
+
+          <!-- Topbar Navbar -->
+          <ul class="navbar-nav ml-auto">
+
+            <!-- Nav Item - Fork on GitHub -->
+            <li class="nav-item no-arrow mx-1">
+              <a class="nav-link" href="https://github.com/theojulienne/covid-19-graphics" role="button">
+                <span class="mr-2 text-gray-600"><i class="fab fa-github fa-fw"></i> <span class="small d-none d-lg-inline">Contribute on GitHub</span></span>
+              </a>
+            </li>
+
+          </ul>
+
+        </nav>
+        <!-- End of Topbar -->
+
+        <!-- Begin Page Content -->
+        <div class="container-fluid">
+
+          <div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">COVID-19 Worldwide Control Measures</h1>
+</div>
+
+<div class="row" id="graph_resident_lockdown_cumulative_row">
+
+  <div class="col-xl-12 col-lg-7">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary graph-title">Cumulative confirmed cases by country relative to resident lockdown (where known)</h6>
+      </div>
+      
+      <div class="card-body">
+        <div id="graph_resident_lockdown_cumulative" class="plotly-graph-needs-resize" style="width: 100%;height:400px;"></div>
+      </div>
+    </div>
+  </div>
+  
+</div>
+<div class="row" id="graph_border_closure_cumulative_row">
+
+  <div class="col-xl-12 col-lg-7">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary graph-title">Cumulative confirmed cases by country relative to border closure (where known)</h6>
+      </div>
+      
+      <div class="card-body">
+        <div id="graph_border_closure_cumulative" class="plotly-graph-needs-resize" style="width: 100%;height:400px;"></div>
+      </div>
+    </div>
+  </div>
+  
+</div>
+<div class="row" id="graph_self_isolation_cumulative_row">
+
+  <div class="col-xl-12 col-lg-7">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary graph-title">Cumulative confirmed cases by country relative to incoming passenger self-isolation (where known)</h6>
+      </div>
+      
+      <div class="card-body">
+        <div id="graph_self_isolation_cumulative" class="plotly-graph-needs-resize" style="width: 100%;height:400px;"></div>
+      </div>
+    </div>
+  </div>
+  
+</div>
+
+<script>
+  function prepare_event_timeline(graph_id, control_class, control_type, delta) {
+    var lockdown_events = {};
+
+    for (var country_iso in covid19_dataset_world_events['countries']) {
+      var country_events = covid19_dataset_world_events['countries'][country_iso]['events'];
+      for (var i in country_events) {
+        var event = country_events[i];
+        if (event['type'] == 'control' && event['control']['class'] == control_class && event['control']['type'] == control_type) {
+          lockdown_events[country_iso] = event;
+        }
+      }
+    }
+
+    var citationContainer = $("<div style=\"font-size: 11px;\"><hr></div>").insertAfter('#' + graph_id);
+    var traces = [];
+
+    // we have our countries with lockdown events now. pull their timeseries, and redo dates to be deltas from event.
+    var x_dates = covid19_dataset['timeseries_dates'];
+    for (var country_iso in lockdown_events) {
+      var country_event = lockdown_events[country_iso];
+      var lockdown_date = country_event['date'];
+
+      var c = $('<div />').appendTo(citationContainer);
+      $('<span />').text(lockdown_date + ' - ').appendTo(c);
+      $('<a target="_blank" />').text(country_event['name']).attr('href', country_event['citations'][0]).appendTo(c);
+
+      var new_x = [];
+      for (i = 0; i < x_dates.length; i++) {
+        new_x.push(i - x_dates.indexOf(lockdown_date))
+      }
+
+      var trace_data = covid19_dataset['subseries'][country_iso]['total']['confirmed'];
+      var type = 'line';
+      if (delta) {
+        trace_data = cumulative_to_delta(trace_data);
+        type = 'bar';
+      }
+
+      traces.push({
+        x: new_x,
+        y: trace_data,
+        type: type,
+        name: covid19_dataset_country_names[country_iso],
+      });
+    }
+
+    var layout = {
+      barmode: 'stack',
+      showlegend: true,
+      xaxis: {
+        range: [-10, 7*5],
+        tickvals: [-7, 0, 7, 14, 21, 28],
+        ticktext: ['-1 week', 'Control added', '1 week', '2 weeks', '3 weeks', '4 weeks'],
+        showline: true,
+        zeroline: true,
+        showgrid: true,
+        ticklen: 8,
+        gridwidth: 2,
+        zerolinewidth: 4
+      }
+    };
+
+    Plotly.newPlot(graph_id, traces, $.extend({}, default_layout, layout), $.extend({}, default_config));
+
+    // add citations
+    
+    var citation
+  }
+
+  prepare_event_timeline('graph_resident_lockdown_cumulative', 'resident-activity', 'lockdown', false);
+  prepare_event_timeline('graph_border_closure_cumulative', 'border-movement', 'non-citizen', false);
+  prepare_event_timeline('graph_self_isolation_cumulative', 'isolation', 'self-isolation', false);
+</script>
+
+
+        </div>
+        <!-- /.container-fluid -->
+
+      </div>
+      <!-- End of Main Content -->
+
+      <!-- Footer -->
+      <footer class="sticky-footer bg-white">
+        <div class="container my-auto">
+          <div class="copyright text-center my-auto">
+            Based on <a href="https://github.com/theojulienne/covid-19-data">open source data collections</a> based off various sources including the <a href="https://github.com/CSSEGISandData/COVID-19">JHU CSSE data</a>, <a href="https://covidtracking.com/">covidtracking.com (US)</a> and many others.<br />
+            <br />
+            This data and the graphs here are unofficial, and contributors are software developers, not epidemiologists.<br />
+            <br />
+            Uses wonderful open source projects like <a href="https://startbootstrap.com/themes/sb-admin-2/">sb-admin-2 theme</a>, <a href="https://middlemanapp.com/">Middleman</a>, and hosted and built freely using <a href="https://github.com/features/actions">GitHub Actions</a> and <a href="https://pages.github.com/">GitHub Pages</a>.
+          </div>
+        </div>
+      </footer>
+      <!-- End of Footer -->
+
+    </div>
+    <!-- End of Content Wrapper -->
+
+  </div>
+  <!-- End of Page Wrapper -->
+
+  <!-- Bootstrap core JavaScript-->
+  <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Core plugin JavaScript-->
+  <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+  <!-- Page level plugins -->
+  <script src="vendor/chart.js/Chart.min.js"></script>
+
+</body>
+
+</html>
