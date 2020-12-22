@@ -85,7 +85,7 @@ datasets: ['dataset_top10', 'dataset_world_totals', 'dataset_top10_by_deaths']
     $.extend({}, default_config)
   );
 
-  plotly_log_graph_with_doubling_lines('graph_confirmed_realigned_log', limit_to_biggest_series(shift_graph_to_threshold(lines_confirmed), 10), 2, 7, null);
+  plotly_log_graph_with_doubling_lines('graph_confirmed_realigned_log', limit_to_biggest_series(shift_graph_to_threshold(lines_confirmed), 10), 2, 8, null);
   plotly_log_graph_with_doubling_lines('graph_top_deaths_realigned_log', limit_to_biggest_series(shift_graph_to_threshold(lines_top_deaths, 10), 10), 1, 7, null);
 
   // and world totals of confirmed/deaths/recovered
@@ -162,6 +162,18 @@ datasets: ['dataset_top10', 'dataset_world_totals', 'dataset_top10_by_deaths']
       text: "One death every 15 seconds",
       x: 0.05,
       y: 24*60*2*2,
+      xref: 'paper',
+      yref: 'y',
+      showarrow: false,
+      yanchor: 'bottom',
+      font: {
+        color: '#aa0000'
+      }
+    },
+    {
+      text: "One death every 5 seconds",
+      x: 0.05,
+      y: 24*60*2*2*3,
       xref: 'paper',
       yref: 'y',
       showarrow: false,
